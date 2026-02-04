@@ -45,7 +45,11 @@ export const useApproveRecharge = () => {
           data: { remarks },
         })
       ).data,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["recharges"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["recharges"] });
+      queryClient.invalidateQueries({ queryKey: ["recharge-statistics"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboardStats"] });
+    },
   });
 };
 
@@ -60,6 +64,9 @@ export const useRejectRecharge = () => {
           data: { remarks },
         })
       ).data,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["recharges"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["recharges"] });
+      queryClient.invalidateQueries({ queryKey: ["recharge-statistics"] });
+    },
   });
 };

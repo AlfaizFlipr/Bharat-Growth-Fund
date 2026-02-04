@@ -1,9 +1,9 @@
-// hooks/useAdminLevels.ts
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { adminUrls } from "../api-urls/api.url";
 import { request } from "../../lib/axios.config";
 
-// Types
+
 interface LevelFilters {
   page?: number;
   limit?: number;
@@ -15,27 +15,22 @@ interface CreateLevelPayload {
   levelNumber: number;
   levelName: string;
   investmentAmount: number;
-  rewardPerTask: number;
-  dailyTaskLimit: number;
-  aLevelCommissionRate: number;
-  bLevelCommissionRate: number;
-  cLevelCommissionRate: number;
+  dailyIncome: number;
   icon?: string;
   description?: string;
   order?: number;
+  isActive?: boolean;
 }
 
 interface UpdateLevelPayload {
   levelId: string;
-  data: Partial<CreateLevelPayload> & {
-    isActive?: boolean;
-  };
+  data: Partial<CreateLevelPayload>;
 }
 
-// Fetch all levels
+
 const fetchAllLevels = async (filters: LevelFilters) => {
   const params = new URLSearchParams();
-  
+
   Object.entries(filters).forEach(([key, value]) => {
     if (value !== undefined && value !== null && value !== '') {
       params.append(key, String(value));
@@ -50,7 +45,7 @@ const fetchAllLevels = async (filters: LevelFilters) => {
   return response.data;
 };
 
-// Fetch single level
+
 const fetchLevelById = async (levelId: string) => {
   const response = await request({
     url: `${adminUrls.LEVELS}/${levelId}`,
@@ -60,7 +55,7 @@ const fetchLevelById = async (levelId: string) => {
   return response.data;
 };
 
-// Create level
+
 const createLevel = async (data: CreateLevelPayload) => {
   const response = await request({
     url: adminUrls.LEVELS,
@@ -71,7 +66,7 @@ const createLevel = async (data: CreateLevelPayload) => {
   return response.data;
 };
 
-// Update level
+
 const updateLevel = async ({ levelId, data }: UpdateLevelPayload) => {
   const response = await request({
     url: `${adminUrls.LEVELS}/${levelId}`,
@@ -82,7 +77,7 @@ const updateLevel = async ({ levelId, data }: UpdateLevelPayload) => {
   return response.data;
 };
 
-// Delete level
+
 const deleteLevel = async (levelId: string) => {
   const response = await request({
     url: `${adminUrls.LEVELS}/${levelId}`,
@@ -92,12 +87,12 @@ const deleteLevel = async (levelId: string) => {
   return response.data;
 };
 
-// Hooks
+
 export const useAllLevels = (filters: LevelFilters) => {
   return useQuery({
     queryKey: ["admin-levels", filters],
     queryFn: () => fetchAllLevels(filters),
-    staleTime: 30000, // 30 seconds
+    staleTime: 30000, 
   });
 };
 

@@ -67,20 +67,20 @@ export default async (req: Request, res: Response, __: NextFunction) => {
 
     const cookieOptions: any = {
       httpOnly: true,
-      secure: isProduction, // true in production, false in dev
-      sameSite: isProduction ? 'none' : 'lax', // 'none' for cross-origin
+      secure: isProduction, 
+      sameSite: isProduction ? 'none' : 'lax', 
       path: '/',
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      maxAge: 24 * 60 * 60 * 1000, 
     };
 
-    // IMPORTANT: For Render.com + Netlify on different domains,
-    // DO NOT set domain option - let browser handle it
-    // Only set domain if both frontend and backend are on same root domain
-    // Example: api.example.com and www.example.com (same root: example.com)
+    
+    
+    
+    
     
     const cookieDomain = process.env.COOKIE_DOMAIN;
     if (isProduction && cookieDomain && cookieDomain.trim() !== '') {
-      // Remove protocol if accidentally included
+      
       const cleanDomain = cookieDomain.replace(/^https?:\/\//, '');
       if (cleanDomain && cleanDomain !== '') {
         cookieOptions.domain = cleanDomain;
@@ -91,7 +91,7 @@ export default async (req: Request, res: Response, __: NextFunction) => {
 
     const { password: _, ...userData } = user.toObject();
 
-    // CRITICAL: Return token in response for iOS and cross-origin scenarios
+    
     return JsonResponse(res, {
       status: "success",
       statusCode: 200,
@@ -99,7 +99,7 @@ export default async (req: Request, res: Response, __: NextFunction) => {
       message: "User login successful.",
       data: {
         user: userData,
-        token: authToken.token, // IMPORTANT: Include token for client-side storage
+        token: authToken.token, 
       },
     });
   } catch (err) {

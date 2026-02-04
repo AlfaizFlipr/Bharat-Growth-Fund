@@ -1,4 +1,4 @@
-// models/bankAccount.model.ts
+
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IBankAccount extends Document {
@@ -9,7 +9,7 @@ export interface IBankAccount extends Document {
   ifscCode: string;
   branchName?: string;
   accountType: 'savings' | 'current' | 'qr';
-  qrCodeImage?: string; // Path to QR code image
+  qrCodeImage?: string; 
   isDefault: boolean;
   isActive: boolean;
   createdAt: Date;
@@ -73,7 +73,7 @@ const BankAccountSchema: Schema = new Schema(
   }
 );
 
-// Compound index for user and active status
+
 BankAccountSchema.index({ userId: 1, isActive: 1 });
 
 export default mongoose.model<IBankAccount>('BankAccount', BankAccountSchema);

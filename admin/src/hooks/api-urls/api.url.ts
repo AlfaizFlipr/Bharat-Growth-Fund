@@ -6,13 +6,9 @@ const adminPrefix = "/admin";
 
 const LevelPrefix = "/level/admin";
 
-const teamPrefix = "/team/admin";
-
 const paymentPrefix = "/payment/admin";
 
 const rechargePrefix = "/recharge/admin";
-
-const conferenceNews = "/conferenceNews";
 
 const withdrawalPrefix = "/withdrawal/admin";
 
@@ -40,11 +36,11 @@ export const userUrls = {
   DEDUCT_WALLET_AMOUNT : (userId:string) => 
     userPrefix + "/users/" + userId + "/deduct-wallet-amount",
   TOGGLE_USD_USER: (userId: string) =>
-    usdWithdrawalPrefix + "/users/" + userId + "/toggle-usd",
+    usdWithdrawalPrefix + "/toggle-user/" + userId,
   FUND_USD_WALLET: (userId: string) =>
-    usdWithdrawalPrefix + "/users/" + userId + "/fund-wallet",
+    usdWithdrawalPrefix + "/fund-wallet/" + userId,
   GET_USD_WALLET: (userId: string) =>
-    usdWithdrawalPrefix + "/users/" + userId + "/wallet",
+    usdWithdrawalPrefix + "/wallet/" + userId,
 };
 
 export const adminUrls = {
@@ -55,10 +51,6 @@ export const adminUrls = {
 
   LEVELS: `${LevelPrefix}/levels`,
   LEVEL_BY_ID: (levelId: string) => `${LevelPrefix}/levels/${levelId}`,
-
-  TEAM_REFERRALS: `${teamPrefix}/team/referrals`,
-  TEAM_STATISTICS: `${teamPrefix}/team/statistics`,
-  TEAM_TREE_BY_USER: (userId: string) => `${teamPrefix}/team/tree/${userId}`,
 };
 
 export const paymentUrls = {
@@ -86,30 +78,20 @@ export const withdrawalUrls = {
 
   WITHDRAWAL_CONFIGS: "/withdrawalConfig/withdrawal-configs",
   UPDATE_WITHDRAWAL_CONFIG: (dayOfWeek: number) =>
-    `//withdrawalConfig/withdrawal-configs/${dayOfWeek}`,
+    `/withdrawalConfig/withdrawal-configs/${dayOfWeek}`,
   BULK_UPDATE_CONFIGS: "/withdrawalConfig/withdrawal-configs/bulk",
 };
 
 export const usdWithdrawalUrls = {
   USD_WITHDRAWALS: usdWithdrawalPrefix + "/withdrawals",
   APPROVE_USD_WITHDRAWAL: (withdrawalId: string) =>
-    `${usdWithdrawalPrefix}/withdrawals/${withdrawalId}/approve`,
+    `${usdWithdrawalPrefix}/approve/${withdrawalId}`,
   REJECT_USD_WITHDRAWAL: (withdrawalId: string) =>
-    `${usdWithdrawalPrefix}/withdrawals/${withdrawalId}/reject`,
-  // Bitget/Settings endpoints
+    `${usdWithdrawalPrefix}/reject/${withdrawalId}`,
+  
   GET_SETTINGS: usdWithdrawalPrefix + "/settings",
   UPDATE_SETTINGS: usdWithdrawalPrefix + "/settings",
   TEST_BITGET: usdWithdrawalPrefix + "/test-bitget",
   BITGET_STATUS: (withdrawalId: string) =>
-    `${usdWithdrawalPrefix}/withdrawals/${withdrawalId}/bitget-status`,
-};
-
-export const conferenceNewsUrls = {
-  ACTIVE: conferenceNews + "/active",
-  ALL: conferenceNews + "/all",
-  CREATE: conferenceNews + "/create",
-  UPLOAD_IMAGE: conferenceNews + "/upload-image",
-  CLOSE: conferenceNews + "/close",
-  DELETE: conferenceNews + "/delete",
-  TOGGLE_STATUS: conferenceNews + "/toggle-status",
+    `${usdWithdrawalPrefix}/bitget-status/${withdrawalId}`,
 };

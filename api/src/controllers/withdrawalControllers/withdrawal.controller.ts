@@ -1,15 +1,13 @@
-// controllers/withdrawalControllers/withdrawal.controller.ts
+
 import { Request, Response, NextFunction } from "express";
 import commonsUtils from "../../utils";
 import models from "../../models";
-import mongoose from "mongoose";
 import bcrypt from "bcrypt";
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
 
 const { JsonResponse } = commonsUtils;
 
-// Get user's bank accounts
+
 export const getBankAccounts = async (
   req: Request,
   res: Response,
@@ -42,7 +40,7 @@ export const getBankAccounts = async (
   }
 };
 
-// Add bank account
+
 export const addBankAccount = async (
   req: Request,
   res: Response,
@@ -60,7 +58,7 @@ export const addBankAccount = async (
       isDefault,
     } = req.body;
 
-    // Check if user already has 4 accounts
+    
     const accountCount = await models.bankAccount.countDocuments({
       userId,
       isActive: true,
@@ -75,7 +73,7 @@ export const addBankAccount = async (
       });
     }
 
-    // Check if account already exists
+    
     const existingAccount = await models.bankAccount.findOne({
       userId,
       accountNumber,
@@ -91,7 +89,7 @@ export const addBankAccount = async (
       });
     }
 
-    // If this is set as default, remove default from other accounts
+    
     if (isDefault) {
       await models.bankAccount.updateMany(
         { userId, isActive: true },
@@ -99,7 +97,7 @@ export const addBankAccount = async (
       );
     }
 
-    // Create new bank account
+    
     const newAccount = await models.bankAccount.create({
       userId,
       accountHolderName,
@@ -147,7 +145,7 @@ export const addQRCode = async (
       });
     }
 
-    // Check if user already has 4 QR codes
+    
     const qrCount = await models.bankAccount.countDocuments({
       userId,
       isActive: true,
@@ -155,7 +153,7 @@ export const addQRCode = async (
     });
 
     if (qrCount >= 4) {
-      // Delete uploaded file if limit exceeded
+      
       fs.unlinkSync(req.file.path);
       return JsonResponse(res, {
         status: "error",
@@ -165,7 +163,7 @@ export const addQRCode = async (
       });
     }
 
-    // If this is set as default, remove default from other accounts
+    
     if (isDefault) {
       await models.bankAccount.updateMany(
         { userId, isActive: true },
@@ -173,8 +171,8 @@ export const addQRCode = async (
       );
     }
 
-    // Create QR code entry
-    const qrCodePath = req.file.path.replace(/\\/g, '/');
+    
+    const qrCodePath = req.file.path.replaceAll('\\', '/');
     const newQRCode = await models.bankAccount.create({
       userId,
       accountHolderName: qrName,
@@ -195,7 +193,7 @@ export const addQRCode = async (
     });
   } catch (error) {
     console.error("Error adding QR code:", error);
-    // Delete uploaded file on error
+    
     if (req.file) {
       fs.unlinkSync(req.file.path);
     }
@@ -208,7 +206,7 @@ export const addQRCode = async (
   }
 };
 
-// Delete bank account or QR code
+
 export const deleteBankAccount = async (
   req: Request,
   res: Response,
@@ -233,7 +231,7 @@ export const deleteBankAccount = async (
       });
     }
 
-    // Delete QR image file if it's a QR code
+    
     if (account.accountType === 'qr' && account.qrCodeImage) {
       try {
         if (fs.existsSync(account.qrCodeImage)) {
@@ -244,11 +242,11 @@ export const deleteBankAccount = async (
       }
     }
 
-    // Soft delete
+    
     account.isActive = false;
     await account.save();
 
-    // If deleted account was default, set another as default
+    
     if (account.isDefault) {
       const nextAccount = await models.bankAccount.findOne({
         userId,
@@ -277,7 +275,7 @@ export const deleteBankAccount = async (
   }
 };
 
-// Set default account
+
 export const setDefaultAccount = async (
   req: Request,
   res: Response,
@@ -302,13 +300,13 @@ export const setDefaultAccount = async (
       });
     }
 
-    // Remove default from all accounts
+    
     await models.bankAccount.updateMany(
       { userId, isActive: true },
       { $set: { isDefault: false } }
     );
 
-    // Set this as default
+    
     account.isDefault = true;
     await account.save();
 
@@ -330,7 +328,7 @@ export const setDefaultAccount = async (
   }
 };
 
-// Get wallet info
+
 export const getWalletInfo = async (
   req: Request,
   res: Response,
@@ -379,23 +377,63 @@ export const createWithdrawal = async (req: Request, res: Response, __: NextFunc
     const userId = res.locals.userId;
     const { walletType, amount, bankAccountId, withdrawalPassword } = req.body;
 
-    if (isNaN(amount) || amount < 280) {
+    
+    const today = new Date();
+    const dayOfWeek = today.getDay();
+    const currentTime = `${today.getHours().toString().padStart(2, '0')}:${today.getMinutes().toString().padStart(2, '0')}`;
+
+    const config = await models.withdrawalConfig.findOne({ dayOfWeek });
+
+    if (!config || !config.isActive) {
       return JsonResponse(res, {
         status: "error",
-        statusCode: 400,
-        message: "Minimum withdrawal amount is Rs 280.",
+        statusCode: 403,
+        message: "Withdrawals are not allowed today.",
         title: "Withdrawal",
       });
     }
 
     const user = await models.User.findById(userId)
-      .select("+withdrawalPassword mainWallet commissionWallet totalWithdrawals isUSDUser");
+      .select("+withdrawalPassword mainWallet commissionWallet totalWithdrawals isUSDUser currentLevelNumber");
 
     if (!user) {
       return JsonResponse(res, {
         status: "error",
         statusCode: 404,
         message: "User not found.",
+        title: "Withdrawal",
+      });
+    }
+
+    const userLevel = user.currentLevelNumber;
+    if (!config.allowedLevels.includes(userLevel)) {
+      return JsonResponse(res, {
+        status: "error",
+        statusCode: 403,
+        message: `Your level (Apple Level ${userLevel}) is not allowed to withdraw today.`,
+        title: "Withdrawal",
+      });
+    }
+
+    
+    const currentMinutes = timeToMinutes(currentTime);
+    const startMinutes = timeToMinutes(config.startTime);
+    const endMinutes = timeToMinutes(config.endTime);
+
+    if (currentMinutes < startMinutes || currentMinutes > endMinutes) {
+      return JsonResponse(res, {
+        status: "error",
+        statusCode: 403,
+        message: `Withdrawals are only allowed between ${config.startTime} and ${config.endTime}.`,
+        title: "Withdrawal",
+      });
+    }
+
+    if (Number.isNaN(amount) || amount < 280) {
+      return JsonResponse(res, {
+        status: "error",
+        statusCode: 400,
+        message: "Minimum withdrawal amount is Rs 280.",
         title: "Withdrawal",
       });
     }
@@ -418,20 +456,21 @@ export const createWithdrawal = async (req: Request, res: Response, __: NextFunc
       }
     }
 
-    const walletBalance = walletType === "mainWallet" ? user.mainWallet : user.commissionWallet;
-    if (walletBalance < amount) {
+    
+    const sourceWallet = walletType === 'commissionWallet' ? user.commissionWallet : user.mainWallet;
+    if (sourceWallet < amount) {
       return JsonResponse(res, {
         status: "error",
         statusCode: 400,
-        message: "Insufficient wallet balance.",
+        message: `Insufficient ${walletType === 'commissionWallet' ? 'commission' : 'main'} wallet balance.`,
         title: "Withdrawal",
       });
     }
 
-    // For USD users, bank account is optional - funds go to USD Wallet
+    
     let bankAccount = null;
     if (!isUSDUser) {
-      // Non-USD users MUST have bank account
+      
       bankAccount = await models.bankAccount.findOne({
         _id: bankAccountId,
         userId,
@@ -448,25 +487,26 @@ export const createWithdrawal = async (req: Request, res: Response, __: NextFunc
       }
     }
 
-    if (walletType === "mainWallet") {
-      user.mainWallet -= amount;
-    } else {
+    
+    if (walletType === 'commissionWallet') {
       user.commissionWallet -= amount;
+    } else {
+      user.mainWallet -= amount;
     }
 
     user.totalWithdrawals += amount;
     await user.save();
 
-    // Create withdrawal record
+    
     const withdrawalData: any = {
       userId,
       walletType,
       amount,
       status: "pending",
-      isUSDWithdrawal: isUSDUser, // Mark as USD withdrawal
+      isUSDWithdrawal: isUSDUser, 
     };
 
-    // Only add bank details for non-USD users
+    
     if (bankAccount) {
       withdrawalData.bankAccountId = bankAccountId;
       withdrawalData.ifscCode = bankAccount.ifscCode;
@@ -476,7 +516,7 @@ export const createWithdrawal = async (req: Request, res: Response, __: NextFunc
       withdrawalData.accountType = bankAccount.accountType;
       withdrawalData.qrCodeImage = bankAccount.qrCodeImage || null;
     } else {
-      // For USD users, mark as USD Wallet destination
+      
       withdrawalData.bankName = "USD Wallet";
       withdrawalData.accountHolderName = user.name || "USD User";
     }
@@ -487,7 +527,7 @@ export const createWithdrawal = async (req: Request, res: Response, __: NextFunc
       status: "success",
       statusCode: 201,
       title: "Withdrawal",
-      message: isUSDUser 
+      message: isUSDUser
         ? "Withdrawal request created. Amount will be credited to your USD Wallet after approval."
         : "Withdrawal request created successfully.",
       data: { withdrawal },
@@ -628,8 +668,8 @@ const getAllWithdrawals = async (
       walletType = ""
     } = req.query;
 
-    const pageNum = parseInt(page as string);
-    const limitNum = parseInt(limit as string);
+    const pageNum = Number.parseInt(page as string, 10);
+    const limitNum = Number.parseInt(limit as string, 10);
     const skip = (pageNum - 1) * limitNum;
 
     const filter: any = {};
@@ -779,12 +819,12 @@ const approveWithdrawal = async (
       });
     }
 
-    // Check if this is a USD user withdrawal (goes to USD Wallet)
-    const isUSDWithdrawal = (withdrawal as any).isUSDWithdrawal || 
-                           (withdrawal as any).bankName === "USD Wallet";
+    
+    const isUSDWithdrawal = (withdrawal as any).isUSDWithdrawal ||
+      (withdrawal as any).bankName === "USD Wallet";
 
     if (isUSDWithdrawal) {
-      // Credit to USD Wallet instead of direct payment
+      
       const user = await models.User.findById(withdrawal.userId);
       if (!user) {
         return JsonResponse(res, {
@@ -795,18 +835,16 @@ const approveWithdrawal = async (
         });
       }
 
-      // Get or create USD Wallet
-      let usdWallet = await models.USDWallet.findOne({ userId: withdrawal.userId });
       
-      if (!usdWallet) {
-        // Create USD Wallet if doesn't exist
-        usdWallet = await models.USDWallet.create({
-          userId: withdrawal.userId,
-          balanceINR: 0,
-          balanceUSD: 0,
-          lastExchangeRate: 83, // Default rate
-        });
-      }
+      let usdWallet = await models.USDWallet.findOne({ userId: withdrawal.userId });
+
+      
+      usdWallet ??= await models.USDWallet.create({
+        userId: withdrawal.userId,
+        balanceINR: 0,
+        balanceUSD: 0,
+        lastExchangeRate: 83, 
+      });
 
       const exchangeRate = 83;
 
@@ -834,12 +872,12 @@ const approveWithdrawal = async (
       withdrawal.remarks = remarks || "Amount credited to USD Wallet";
       await withdrawal.save();
 
-      return JsonResponse(res, { 
+      return JsonResponse(res, {
         status: "success",
         statusCode: 200,
         title: "Withdrawal",
         message: `₹${withdrawal.amount} has been credited to user's USD Wallet ($${(withdrawal.amount / exchangeRate).toFixed(2)}).`,
-        data: { 
+        data: {
           withdrawal,
           usdWalletBalance: {
             balanceINR: usdWallet.balanceINR,
@@ -849,7 +887,7 @@ const approveWithdrawal = async (
       });
     }
 
-    // Regular INR withdrawal - just mark as completed
+    
     withdrawal.status = "completed";
     withdrawal.transactionId = transactionId;
     withdrawal.remarks = remarks;
@@ -935,7 +973,7 @@ const rejectWithdrawal = async (
   }
 };
 
-// Helper function to convert time string (HH:MM) to minutes since midnight
+
 const timeToMinutes = (timeString: string): number => {
   const [hours, minutes] = timeString.split(':').map(Number);
   return hours * 60 + minutes;
@@ -960,7 +998,7 @@ export const checkWithdrawalAvailability = async (
     }
 
     const today = new Date();
-    const dayOfWeek = today.getDay(); 
+    const dayOfWeek = today.getDay();
     const currentTime = `${today.getHours().toString().padStart(2, '0')}:${today.getMinutes().toString().padStart(2, '0')}`;
 
     const config = await models.withdrawalConfig.findOne({ dayOfWeek });
@@ -995,7 +1033,7 @@ export const checkWithdrawalAvailability = async (
       });
     }
 
-    // Convert times to minutes for proper comparison
+    
     const currentMinutes = timeToMinutes(currentTime);
     const startMinutes = timeToMinutes(config.startTime);
     const endMinutes = timeToMinutes(config.endTime);

@@ -22,7 +22,7 @@ export const useWalletInfoQuery = () => {
   });
 };
 
-// ✅ Get Bank Accounts
+
 export const getBankAccounts = async () => {
   const response = await request({
     url: withdrawalUrls.BANK_ACCOUNTS,
@@ -42,7 +42,7 @@ export const useBankAccountsQuery = () => {
   });
 };
 
-// ✅ Add Bank Account
+
 interface AddBankPayload {
   accountNumber: string;
   accountHolderName: string;
@@ -87,7 +87,7 @@ export const useAddBankAccountMutation = () => {
   });
 };
 
-// ✅ Delete Bank Account
+
 const deleteBankAccountRequest = async (accountId: string) => {
   const response = await request({
     url: `${withdrawalUrls.BANK_ACCOUNTS}/${accountId}`,
@@ -121,7 +121,7 @@ export const useDeleteBankAccountMutation = () => {
   });
 };
 
-// ✅ Set Default Bank Account
+
 const setDefaultAccountRequest = async (accountId: string) => {
   const response = await request({
     url: `${withdrawalUrls.BANK_ACCOUNTS}/${accountId}/set-default`,
@@ -155,11 +155,11 @@ export const useSetDefaultAccountMutation = () => {
   });
 };
 
-// ✅ Create Withdrawal
+
 interface CreateWithdrawalPayload {
   walletType: string;
   amount: number;
-  bankAccountId?: string; // Optional for USD users
+  bankAccountId?: string; 
   withdrawalPassword: string;
 }
 
@@ -198,7 +198,7 @@ export const useCreateWithdrawalMutation = () => {
   });
 };
 
-// ✅ Get Withdrawal History
+
 interface WithdrawalHistoryParams {
   page?: number;
   limit?: number;
@@ -224,7 +224,7 @@ export const useWithdrawalHistoryQuery = (params: WithdrawalHistoryParams) => {
   });
 };
 
-// ✅ Set Withdrawal Password
+
 interface SetPasswordPayload {
   currentPassword?: string;
   newPassword: string;

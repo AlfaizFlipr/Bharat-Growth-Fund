@@ -1,326 +1,206 @@
-import React, { useRef, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Flex,
   Text,
   Loader,
-  Alert,
   Badge,
   Box,
-  Progress,
   Button,
   Center,
+  Container,
+  Paper,
+  Stack,
+  ThemeIcon,
+  Divider,
+  SimpleGrid,
 } from "@mantine/core";
 import { useNavigate } from "react-router-dom";
-import { Trophy, Target, CheckCircle, ShoppingCart, IndianRupee } from "lucide-react";
-import classes from "./Task.module.scss";
-import TaskItem from "../../components/TaskItem/TaskItem";
-import { useInfiniteTasksQuery } from "../../hooks/query/useGetTask.query";
+import { Trophy, Clock, ShieldCheck, Zap, ArrowRight, Wallet, Sparkles } from "lucide-react";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../store/store";
+import { useVerifyUserQuery } from "../../hooks/query/useGetVerifyUser.query";
 
 const Task: React.FC = () => {
   const navigate = useNavigate();
   const { userData } = useSelector((state: RootState) => state.auth);
+  const { data: verifyData, isLoading } = useVerifyUserQuery();
 
-  const currentLevelName =
-    userData?.currentLevel && userData.currentLevel !== "null"
-      ? userData.currentLevel
-      : undefined;
+  const [timeLeft, setTimeLeft] = useState("");
 
-  const currentLevelNumber = userData?.currentLevelNumber ?? -1;
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const now = new Date();
+      const tomorrow = new Date();
+      tomorrow.setHours(24, 0, 0, 0);
 
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading,
-    isError,
-  } = useInfiniteTasksQuery({
-    level: currentLevelName,
-    limit: 10,
-  });
+      const diff = tomorrow.getTime() - now.getTime();
+      const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const s = Math.floor((diff % (1000 * 60)) / 1000);
 
-  const observer = useRef<IntersectionObserver | null>(null);
+      setTimeLeft(
+        `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
+      );
+    }, 1000);
 
-  const lastTaskRef = useCallback(
-    (node: HTMLDivElement) => {
-      if (isFetchingNextPage) return;
-
-      if (observer.current) observer.current.disconnect();
-      observer.current = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting && hasNextPage) {
-          fetchNextPage();
-        }
-      });
-      if (node) observer.current.observe(node);
-    },
-    [isFetchingNextPage, fetchNextPage, hasNextPage]
-  );
-
-  const handleTaskClick = (taskId: string, isCompleted: boolean) => {
-    if (!isCompleted) {
-      navigate(`/task/${taskId}`);
-    }
-  };
-
-  const handlePurchaseLevel = () => {
-    navigate("/level");
-  };
+    return () => clearInterval(timer);
+  }, []);
 
   if (isLoading) {
     return (
       <Center h="100vh">
-        <Loader size="lg" />
+        <Loader size="lg" color="#203a43" />
       </Center>
     );
   }
 
-  const allTasks =
-    data?.pages?.flatMap((page) => page?.tasks || [])?.filter(Boolean) || [];
-  const stats = data?.pages?.[0]?.stats;
-  const requiresLevelPurchase =
-    data?.pages?.[0]?.requiresLevelPurchase || false;
+  const user = verifyData?.data?.user || userData;
+  const currentLevelNumber = Number(user?.currentLevelNumber ?? -1);
+  const hasLevel = currentLevelNumber >= 0;
+  const dailyReward =
+    verifyData?.data?.stats?.todayIncome ?? user?.todayIncome ?? user?.dailyIncome ?? 0;
+  const totalRewards = verifyData?.data?.stats?.totalRevenue ?? user?.totalRevenue ?? 0;
 
-  const dailyLimit = stats?.dailyLimit || 0;
-  const todayCompleted = stats?.todayCompleted || 0;
-  const remainingTasks = stats?.remainingTasks || 0;
-  const todayIncome = stats?.todayIncome || 0;
-  const rewardPerTask = stats?.rewardPerTask || 0;
-  const maxDailyEarning = stats?.maxDailyEarning || 0;
-
-  const progressPercentage =
-    dailyLimit > 0 ? (todayCompleted / dailyLimit) * 100 : 0;
-
-  const needsLevelPurchase =
-    !currentLevelName || currentLevelNumber === -1 || requiresLevelPurchase;
-
-  const today = new Date();
-  const isSunday = today.getDay() === 0;
-
-  if (isSunday) {
+  if (!hasLevel) {
     return (
-      <Center h="100vh" p="xl" style={{ textAlign: "center" }}>
-        <Flex direction="column" align="center" gap="md">
-          <Text size="xl" fw={700} c="gray">
-            Today is Sunday ☀️
-          </Text>
-          <Text size="md" c="dimmed">
-            No tasks available today. Please check back tomorrow!
-          </Text>
-        </Flex>
-      </Center>
-    );
-  }
-
-  if (needsLevelPurchase) {
-    return (
-      <Flex className={classes.taskContainer} direction="column">
-        <Flex className={classes.taskInfoBox} direction="column">
-          <Flex align="center" justify="space-between" mb="md">
-            <Text size="xl" fw={700}>
-              No Active Level
-            </Text>
-            <Badge
-              size="lg"
-              variant="gradient"
-              gradient={{ from: "red", to: "orange" }}
-            >
-              Level Required
-            </Badge>
-          </Flex>
-        </Flex>
-
-        <Flex
-          direction="column"
-          justify="center"
-          align="center"
-          style={{ flex: 1, padding: "2rem" }}
-          gap="lg"
+      <Box bg="#f8f9fa" style={{ minHeight: "100vh", paddingBottom: 100 }}>
+        <Box
+          style={{
+            background: "linear-gradient(135deg, #0f2027 0%, #203a43 100%)",
+            padding: "30px 20px 50px",
+            borderRadius: "0 0 35px 35px",
+            color: "white",
+            position: "relative",
+            overflow: "hidden"
+          }}
         >
-          <ShoppingCart size={64} color="black" />
-          <Text size="xl" fw={600} ta="center" c="black">
-            Purchase a Level to Access Tasks
-          </Text>
-          <Text size="sm" c="black" ta="center" maw={400}>
-            You need to purchase a level before you can start completing tasks
-            and earning rewards.
-          </Text>
-          <Button
-            size="md"
-            variant="filled"
-            color="#2d1b4e"
-            gradient={{ from: "blue", to: "cyan" }}
-            onClick={handlePurchaseLevel}
-            leftSection={<ShoppingCart size={20} />}
-          >
-            Browse Levels
-          </Button>
-        </Flex>
-      </Flex>
-    );
-  }
+          <Stack align="center" gap={4}>
+            <ThemeIcon variant="light" color="rgba(255,255,255,0.1)" size={48} radius="xl">
+              <Zap size={24} color="#d4af37" />
+            </ThemeIcon>
+            <Text size="22px" fw={900} style={{ letterSpacing: '-0.5px' }}>Daily Rewards</Text>
+            <Text size="xs" c="rgba(255,255,255,0.5)" ta="center">Activate a membership plan to start earning.</Text>
+          </Stack>
+        </Box>
 
-  if (isError && !requiresLevelPurchase) {
-    return (
-      <Flex justify="center" align="center" h="100vh" p="md">
-        <Alert color="red" title="Error Loading Tasks" maw={500}>
-          <Text size="sm" mb="md">
-            {"Failed to load tasks. Please try again later."}
-          </Text>
-          <Button onClick={() => window.location.reload()} variant="light" color="#2d1b4e"
-          >
-            Retry
-          </Button>
-        </Alert>
-      </Flex>
+        <Container size="sm" mt={20}>
+          <Paper radius="32px" p="xl" withBorder shadow="xl" style={{ textAlign: 'center' }}>
+            <ThemeIcon size={64} radius="xl" color="gray.1" mb="md">
+              <ShieldCheck size={32} color="#94a3b8" />
+            </ThemeIcon>
+            <Text fw={900} size="xl" mb="xs">No Active Plan Found</Text>
+            <Text size="sm" c="dimmed" mb="xl">
+              You haven't purchased a membership level yet. Daily rewards are exclusive to active members.
+            </Text>
+            <Button
+              fullWidth
+              size="lg"
+              radius="xl"
+              onClick={() => navigate("/level")}
+              rightSection={<ArrowRight size={20} />}
+              color="#203a43"
+              style={{ height: 60, fontWeight: 900 }}
+            >
+              Browse Investment Plans
+            </Button>
+          </Paper>
+        </Container>
+      </Box>
     );
   }
 
   return (
-    <Flex className={classes.taskContainer} direction="column">
-      <Flex className={classes.taskInfoBox} direction="column">
-        <Flex align="center" justify="space-between" mb="md">
-          <Text size="xl" fw={700}>
-            {currentLevelName || "No Level"}
-          </Text>
-          <Badge
-            size="lg"
-            variant="gradient"
-            gradient={{ from: "blue", to: "cyan" }}
-          >
-            {currentLevelNumber >= 0
-              ? `Level ${currentLevelNumber}`
-              : "No Level"}
-          </Badge>
+    <Box bg="#f1f5f9" style={{ minHeight: "100vh", paddingBottom: 100 }}>
+      {}
+      <Box
+        style={{
+          background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
+          padding: "40px 20px 60px",
+          borderRadius: "0 0 40px 40px",
+          color: "white"
+        }}
+      >
+        <Flex justify="space-between" align="center" mb="xl">
+          <Box>
+            <Text size="xs" fw={800} c="blue.4" style={{ letterSpacing: 1 }}>MEMBERSHIP LEVEL</Text>
+            <Text size="24px" fw={900}>Level {currentLevelNumber}</Text>
+          </Box>
+          <Badge variant="filled" color="#203a43" size="lg" radius="sm">ACTIVE</Badge>
         </Flex>
 
-        {/* Today's Income Highlight */}
-        <Box
-          mb="md"
-          p="md"
+        <Paper
+          radius="24px"
+          p="xl"
           style={{
-            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-            borderRadius: "12px",
-            color: "white",
+            background: "rgba(255,255,255,0.05)",
+            backdropFilter: "blur(10px)",
+            border: "1px solid rgba(255,255,255,0.1)"
           }}
         >
-          <Flex align="center" justify="space-between">
-            <Flex align="center" gap="xs">
-              <IndianRupee size={20} />
-              <Text size="sm" fw={500}>
-                Today's Earnings
-              </Text>
+          <Stack align="center" gap={4}>
+            <Text size="xs" fw={800} c="blue.2">NEXT REWARD IN</Text>
+            <Text size="48px" fw={900} style={{ fontVariantNumeric: 'tabular-nums', letterSpacing: -2 }}>
+              {timeLeft}
+            </Text>
+            <Flex align="center" gap={6}>
+              <Clock size={14} color="#60a5fa" />
+              <Text size="xs" fw={600} c="blue.1">Automated Credit at Midnight</Text>
             </Flex>
-            <Text size="xl" fw={700}>
-              ₹{todayIncome.toFixed(2)}
-            </Text>
-          </Flex>
-          <Text size="xs" mt="xs" opacity={0.9}>
-            Max possible: ₹{maxDailyEarning} ({dailyLimit} tasks × ₹{rewardPerTask})
-          </Text>
-        </Box>
+          </Stack>
+        </Paper>
+      </Box>
 
-        <Box mb="md">
-          <Flex justify="space-between" align="center" mb="xs">
-            <Flex align="center" gap="xs">
-              <Target size={18} />
-              <Text size="sm" fw={500}>
-                Daily Progress
-              </Text>
+      <Container size="sm" mt={-20}>
+        <Stack gap="md">
+          <Paper radius="32px" p="xl" withBorder shadow="sm">
+            <Flex justify="space-between" align="center" mb="xl">
+              <Box>
+                <Text size="xs" fw={800} c="dimmed">TODAY'S ESTIMATED REWARD</Text>
+                <Text size="32px" fw={900} c="blue.9">₹{dailyReward.toLocaleString()}</Text>
+              </Box>
+              <ThemeIcon size={54} radius="xl" color="#203a43" variant="light">
+                <Sparkles size={28} />
+              </ThemeIcon>
             </Flex>
-            <Text size="sm" fw={600}>
-              {todayCompleted} / {dailyLimit}
-            </Text>
-          </Flex>
-          <Progress value={progressPercentage} size="lg" radius="xl" />
-        </Box>
 
-        <Flex gap="md" wrap="wrap">
-          <Flex direction="column" style={{ flex: 1, minWidth: "45%" }}>
-            <Flex align="center" gap="xs" mb="xs">
-              <CheckCircle size={16} />
-              <Text size="xs">Completed Today</Text>
-            </Flex>
-            <Text size="lg" fw={700}>
-              {todayCompleted}
-            </Text>
-          </Flex>
+            <Divider mb="xl" label={<Badge variant="outline" color="gray" size="xs">STATISTICS</Badge>} labelPosition="center" />
 
-          <Flex direction="column" style={{ flex: 1, minWidth: "45%" }}>
-            <Flex align="center" gap="xs" mb="xs">
-              <Trophy size={16} />
-              <Text size="xs">Tasks Remaining</Text>
-            </Flex>
-            <Text size="lg" fw={700}>
-              {remainingTasks}
-            </Text>
-          </Flex>
-        </Flex>
-      </Flex>
-
-      {/* Task List */}
-      <Flex direction="column" className={classes.taskItemContainer}>
-        {allTasks.length === 0 ? (
-          <Flex
-            direction="column"
-            justify="center"
-            align="center"
-            flex={1}
-            gap="md"
-            p="xl"
-          >
-            <Text size="lg" c="gray" ta="center">
-              {todayCompleted >= dailyLimit
-                ? "🎉 Daily limit reached! Come back tomorrow"
-                : "No tasks available at the moment"}
-            </Text>
-            <Text size="sm" c="dimmed" ta="center">
-              {todayCompleted >= dailyLimit
-                ? `You've completed all ${dailyLimit} tasks today and earned ₹${todayIncome}`
-                : "Check back later for new tasks or upgrade your level"}
-            </Text>
-            {todayCompleted < dailyLimit && (
-              <Button variant="light" onClick={handlePurchaseLevel} mt="md" color="#2d1b4e"
+            <SimpleGrid cols={1} spacing="md">
+              <Box
+                p="md"
+                style={{
+                  background: "#f8fafc",
+                  borderRadius: "16px",
+                  border: "1px solid #e2e8f0"
+                }}
               >
-                Upgrade Level
-              </Button>
-            )}
-          </Flex>
-        ) : (
-          allTasks.map((task: any, index: number) => {
-            if (!task || !task._id || !task.thumbnail) {
-              return null;
-            }
+                <Flex justify="space-between" align="center">
+                  <Flex align="center" gap="sm">
+                    <ThemeIcon color="emerald" variant="light" radius="md">
+                      <Wallet size={18} />
+                    </ThemeIcon>
+                    <Text fw={700} size="sm">Total Reward Amount</Text>
+                  </Flex>
+                  <Text fw={900} c="emerald.9">₹{totalRewards.toLocaleString()}</Text>
+                </Flex>
+              </Box>
+            </SimpleGrid>
+          </Paper>
 
-            const taskElement = (
-              <TaskItem
-                key={task._id}
-                thumbnail={task.thumbnail}
-                level={task.level || "Unknown"}
-                reward={`₹ +${task.rewardPrice || 0}`}
-                isCompleted={task.isCompleted || false}
-                onClick={() => handleTaskClick(task._id, task.isCompleted)}
-              />
-            );
-
-            if (index === allTasks.length - 1) {
-              return (
-                <div ref={lastTaskRef} key={task._id}>
-                  {taskElement}
-                </div>
-              );
-            }
-            return taskElement;
-          })
-        )}
-        {isFetchingNextPage && (
-          <Flex justify="center" align="center" mt="md">
-            <Loader size="sm" />
-          </Flex>
-        )}
-      </Flex>
-    </Flex>
+          <Paper radius="24px" p="lg" style={{ background: "rgba(49, 130, 206, 0.05)", border: "1px solid rgba(49, 130, 206, 0.1)" }}>
+            <Flex gap="md">
+              <ThemeIcon variant="light" color="#203a43">
+                <Trophy size={18} />
+              </ThemeIcon>
+              <Box>
+                <Text size="sm" fw={800}>Passive Income Active</Text>
+                <Text size="xs" c="dimmed">Your daily reward is calculated based on your membership tier and credited automatically. No manual tasks required.</Text>
+              </Box>
+            </Flex>
+          </Paper>
+        </Stack>
+      </Container>
+    </Box>
   );
 };
 

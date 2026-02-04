@@ -2,13 +2,12 @@ import { Request, Response, NextFunction } from "express";
 import commonsUtils from "../../utils";
 import models from "../../models";
 import mongoose from "mongoose";
-import { processReferralCommissions } from "../authControllers/referral.controller";
 
 const { JsonResponse } = commonsUtils;
 
-// ==================== USER ENDPOINTS ====================
 
-// Get all levels with user progress (USER)
+
+
 export const getAllLevels = async (
   req: Request,
   res: Response,
@@ -23,11 +22,10 @@ export const getAllLevels = async (
       .lean();
 
     let userCurrentLevel = null;
-    let userTaskStats = null;
 
     if (userId) {
       const user = await models.User.findById(userId).select(
-        "currentLevel currentLevelNumber investmentAmount todayTasksCompleted mainWallet"
+        "currentLevel currentLevelNumber investmentAmount mainWallet"
       );
 
       if (user) {
@@ -35,76 +33,41 @@ export const getAllLevels = async (
           currentLevel: user.currentLevel,
           currentLevelNumber: user.currentLevelNumber,
           investmentAmount: user.investmentAmount || 0,
-          todayTasksCompleted: user.todayTasksCompleted || 0,
           mainWallet: user.mainWallet || 0,
           hasLevel: user.currentLevel !== null && user.currentLevel !== undefined,
         };
-
-        if (userCurrentLevel.hasLevel) {
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-
-          const completedToday = await models.taskCompletion.countDocuments({
-            userId,
-            completedAt: { $gte: today },
-          });
-
-          userTaskStats = {
-            completedToday,
-          };
-        }
       }
     }
 
     const formattedLevels = levels.map((level) => {
       const isUserLevel = userCurrentLevel?.currentLevelNumber === level.levelNumber;
-      const tasksCompleted = isUserLevel ? (userTaskStats?.completedToday || 0) : 0;
-      const tasksRemaining = level.dailyTaskLimit - tasksCompleted;
 
-      const canPurchase = userCurrentLevel
-        ? !userCurrentLevel.hasLevel
-          ? level.levelNumber === 0 && userCurrentLevel.mainWallet >= level.investmentAmount
-          : level.levelNumber === userCurrentLevel.currentLevelNumber + 1 && 
-            userCurrentLevel.mainWallet >= level.investmentAmount
+      let canPurchase = false;
+      if (userCurrentLevel) {
+        if (userCurrentLevel.hasLevel) {
+          
+          canPurchase = level.levelNumber === userCurrentLevel.currentLevelNumber + 1 &&
+            userCurrentLevel.mainWallet >= level.investmentAmount;
+        } else {
+          
+          canPurchase = level.levelNumber === 0 && userCurrentLevel.mainWallet >= level.investmentAmount;
+        }
+      }
+
+      const isUnlocked = userCurrentLevel?.hasLevel
+        ? level.levelNumber <= userCurrentLevel.currentLevelNumber
         : false;
 
       return {
         level: level.levelName,
         levelNumber: level.levelNumber,
-        remaining: Math.max(0, tasksRemaining),
-        completed: tasksCompleted,
-        target: level.investmentAmount,
         purchasePrice: level.investmentAmount,
-        dailyTasks: `${Math.floor(level.dailyTaskLimit * 0.5)}-${level.dailyTaskLimit}`,
-        commission: `₹${level.rewardPerTask * Math.floor(level.dailyTaskLimit * 0.5)}-₹${level.rewardPerTask * level.dailyTaskLimit}`,
-        rewardPerTask: level.rewardPerTask,
-        dailyTaskLimit: level.dailyTaskLimit,
+        dailyIncome: level.dailyIncome,
         icon: level.icon,
         description: level.description,
-        isUnlocked: userCurrentLevel 
-          ? userCurrentLevel.hasLevel 
-            ? level.levelNumber <= userCurrentLevel.currentLevelNumber
-            : false
-          : false,
+        isUnlocked,
         isCurrent: isUserLevel,
         canPurchase,
-        invitations: [
-          {
-            method: "Invite A-level to join",
-            rate: `${level.aLevelCommissionRate}%`,
-            amount: ((level.investmentAmount * level.aLevelCommissionRate) / 100).toFixed(2),
-          },
-          {
-            method: "Invite B-level to join",
-            rate: `${level.bLevelCommissionRate}%`,
-            amount: ((level.investmentAmount * level.bLevelCommissionRate) / 100).toFixed(2),
-          },
-          {
-            method: "Invite C-level to join",
-            rate: `${level.cLevelCommissionRate}%`,
-            amount: ((level.investmentAmount * level.cLevelCommissionRate) / 100).toFixed(2),
-          },
-        ],
       };
     });
 
@@ -130,7 +93,7 @@ export const getAllLevels = async (
   }
 };
 
-// Upgrade user level (USER)
+
 export const upgradeUserLevel = async (
   req: Request,
   res: Response,
@@ -182,41 +145,38 @@ export const upgradeUserLevel = async (
       });
     }
 
-    const isFirstLevelPurchase = user.currentLevelNumber === -1 || user.currentLevelNumber === null;
-
     user.mainWallet -= targetLevel.investmentAmount;
     user.investmentAmount = (user.investmentAmount || 0) + targetLevel.investmentAmount;
     user.currentLevel = targetLevel.levelName;
     user.currentLevelNumber = targetLevel.levelNumber;
     user.levelName = targetLevel.levelName;
     user.userLevel = targetLevel.levelNumber;
+    user.dailyIncome = targetLevel.dailyIncome; 
     user.levelUpgradedAt = new Date();
-    user.todayTasksCompleted = 0;
 
     await user.save();
 
-    if (isFirstLevelPurchase) {
-      console.log(`🎯 First level purchase detected for user: ${userId}`);
-      try {
-        const commissionResult = await processReferralCommissions(userId, targetLevel);
-        console.log(`✅ Referral commission processing result:`, commissionResult);
-      } catch (error) {
-        console.error(`❌ Error processing referral commissions:`, error);
-      }
-    }
+    
+    await models.transaction.create({
+      userId: user._id,
+      amount: targetLevel.investmentAmount,
+      type: 'LEVEL_PURCHASE',
+      status: 'SUCCESS',
+      description: `Purchased ${targetLevel.levelName} (Level ${targetLevel.levelNumber})`,
+      balanceBefore: user.mainWallet + targetLevel.investmentAmount,
+      balanceAfter: user.mainWallet
+    });
 
     return JsonResponse(res, {
       status: "success",
       statusCode: 200,
       title: "Purchase Level",
-      message: `Successfully purchased ${targetLevel.levelName}! Start watching videos to earn ₹${targetLevel.rewardPerTask} per task.`,
+      message: `Successfully purchased ${targetLevel.levelName}! Your daily income is now ₹${targetLevel.dailyIncome}.`,
       data: {
         newLevel: targetLevel.levelName,
         levelNumber: targetLevel.levelNumber,
         investmentAmount: targetLevel.investmentAmount,
-        rewardPerTask: targetLevel.rewardPerTask,
-        dailyTaskLimit: targetLevel.dailyTaskLimit,
-        maxDailyEarning: targetLevel.rewardPerTask * targetLevel.dailyTaskLimit,
+        dailyIncome: targetLevel.dailyIncome,
         remainingBalance: user.mainWallet,
         totalInvestment: user.investmentAmount,
       },
@@ -232,7 +192,7 @@ export const upgradeUserLevel = async (
   }
 };
 
-// Get level by name (USER)
+
 export const getLevelByName = async (
   req: Request,
   res: Response,
@@ -273,7 +233,7 @@ export const getLevelByName = async (
   }
 };
 
-// Get level by number (USER)
+
 export const getLevelByNumber = async (
   req: Request,
   res: Response,
@@ -314,9 +274,9 @@ export const getLevelByNumber = async (
   }
 };
 
-// ==================== ADMIN ENDPOINTS ====================
 
-// Get all levels for admin with pagination and statistics (ADMIN)
+
+
 export const getAllLevelsAdmin = async (
   req: Request,
   res: Response,
@@ -330,17 +290,17 @@ export const getAllLevelsAdmin = async (
       isActive = ""
     } = req.query;
 
-    const pageNum = parseInt(page as string);
-    const limitNum = parseInt(limit as string);
+    const pageNum = Number.parseInt(page as string, 10);
+    const limitNum = Number.parseInt(limit as string, 10);
     const skip = (pageNum - 1) * limitNum;
 
-    // Build filter
+    
     const filter: any = {};
 
     if (search) {
       filter.$or = [
         { levelName: { $regex: search, $options: "i" } },
-        { levelNumber: isNaN(Number(search)) ? undefined : Number(search) }
+        { levelNumber: Number.isNaN(Number(search)) ? undefined : Number(search) }
       ].filter(Boolean);
     }
 
@@ -348,7 +308,7 @@ export const getAllLevelsAdmin = async (
       filter.isActive = isActive === "true";
     }
 
-    // Fetch levels
+    
     const [levels, totalCount] = await Promise.all([
       models.level.find(filter)
         .sort({ order: 1, levelNumber: 1 })
@@ -358,7 +318,7 @@ export const getAllLevelsAdmin = async (
       models.level.countDocuments(filter)
     ]);
 
-    // Get statistics
+    
     const stats = await models.level.aggregate([
       {
         $group: {
@@ -372,7 +332,7 @@ export const getAllLevelsAdmin = async (
       }
     ]);
 
-    // Get user count per level
+    
     const userStats = await models.User.aggregate([
       {
         $group: {
@@ -382,7 +342,7 @@ export const getAllLevelsAdmin = async (
       }
     ]);
 
-    // Merge user counts with levels
+    
     const levelsWithUserCount = levels.map((level: any) => {
       const userStat = userStats.find((s: any) => s._id === level.levelNumber);
       return {
@@ -421,7 +381,7 @@ export const getAllLevelsAdmin = async (
   }
 };
 
-// Create new level (ADMIN)
+
 export const createLevel = async (
   req: Request,
   res: Response,
@@ -432,27 +392,23 @@ export const createLevel = async (
       levelNumber,
       levelName,
       investmentAmount,
-      rewardPerTask,
-      dailyTaskLimit,
-      aLevelCommissionRate,
-      bLevelCommissionRate,
-      cLevelCommissionRate,
+      dailyIncome,
       icon,
       description,
       order,
     } = req.body;
 
-    // Validation
-    if (levelNumber === undefined || !levelName || rewardPerTask === undefined || !dailyTaskLimit) {
+    
+    if (levelNumber === undefined || !levelName || dailyIncome === undefined) {
       return JsonResponse(res, {
         status: "error",
         statusCode: 400,
-        message: "Level number, name, reward per task, and daily task limit are required.",
+        message: "Level number, name, and daily income are required.",
         title: "Create Level",
       });
     }
 
-    // Check if level already exists
+    
     const existingLevel = await models.level.findOne({
       $or: [{ levelNumber }, { levelName }],
     });
@@ -470,14 +426,10 @@ export const createLevel = async (
       levelNumber,
       levelName,
       investmentAmount: investmentAmount || 0,
-      rewardPerTask,
-      dailyTaskLimit,
-      aLevelCommissionRate: aLevelCommissionRate || 0,
-      bLevelCommissionRate: bLevelCommissionRate || 0,
-      cLevelCommissionRate: cLevelCommissionRate || 0,
-      icon: icon || '🍎',
+      dailyIncome,
+      icon: icon || '💰',
       description: description || '',
-      order: order !== undefined ? order : levelNumber,
+      order: order ?? levelNumber,
       isActive: true,
     });
 
@@ -509,7 +461,7 @@ export const createLevel = async (
   }
 };
 
-// Update level (ADMIN)
+
 export const updateLevel = async (
   req: Request,
   res: Response,
@@ -540,11 +492,7 @@ export const updateLevel = async (
 
     const allowedUpdates = [
       "investmentAmount",
-      "rewardPerTask",
-      "dailyTaskLimit",
-      "aLevelCommissionRate",
-      "bLevelCommissionRate",
-      "cLevelCommissionRate",
+      "dailyIncome",
       "icon",
       "description",
       "order",
@@ -577,7 +525,7 @@ export const updateLevel = async (
   }
 };
 
-// Delete level (ADMIN)
+
 export const deleteLevel = async (
   req: Request,
   res: Response,
@@ -606,7 +554,7 @@ export const deleteLevel = async (
       });
     }
 
-    // Check if any users are using this level
+    
     const usersCount = await models.User.countDocuments({
       currentLevelNumber: level.levelNumber
     });
@@ -640,13 +588,13 @@ export const deleteLevel = async (
 };
 
 export default {
-  // User endpoints
+  
   getAllLevels,
   getLevelByName,
   getLevelByNumber,
   upgradeUserLevel,
+
   
-  // Admin endpoints
   getAllLevelsAdmin,
   createLevel,
   updateLevel,

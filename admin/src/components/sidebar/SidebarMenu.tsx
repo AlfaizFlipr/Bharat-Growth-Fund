@@ -4,29 +4,21 @@ import SidebarMenuItem from "./SidebarMenuItem";
 import { navs } from "./navs";
 import classes from "./sidebar.module.scss";
 import { FaApple } from "react-icons/fa";
+
 interface Iprops {
   showLogo: boolean;
 }
+
 const SidebarMenu: React.FC<Iprops> = ({ showLogo }) => {
   return (
     <Flex
-      direction={"column"}
+      direction="column"
       gap={8}
-      justify={"center"}
-      align={"center"}
-      w={"100%"}
-      className={classes.scrollContainer} 
+      align="stretch"
+      w="100%"
+      className={classes.scrollContainer}
     >
-      {showLogo && (
-        <Flex
-          align="center"
-          justify="center"
-          className={classes.logoContainer}
-        >
-          <FaApple className={classes.logoIcon} />
-          <Text className={classes.logoText}>Admin</Text>
-        </Flex>
-      )}
+    
 
       {navs.map((item) => (
         <SidebarMenuItem key={item.label} item={item} showIcon={showLogo} />

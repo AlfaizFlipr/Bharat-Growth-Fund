@@ -7,17 +7,17 @@ const { JsonResponse } = commonsUtils;
 
 const getStartOfTodayIST = (): Date => {
   const now = new Date();
-  const istOffset = 5.5 * 60 * 60 * 1000; 
+  const istOffset = 5.5 * 60 * 60 * 1000;
   const istTime = new Date(now.getTime() + istOffset);
   istTime.setUTCHours(0, 0, 0, 0);
-  return new Date(istTime.getTime() - istOffset); 
+  return new Date(istTime.getTime() - istOffset);
 };
 
 const getStartOfThisMonthIST = (): Date => {
   const now = new Date();
   const istOffset = 5.5 * 60 * 60 * 1000;
   const istTime = new Date(now.getTime() + istOffset);
-  istTime.setUTCDate(1); 
+  istTime.setUTCDate(1);
   istTime.setUTCHours(0, 0, 0, 0);
   return new Date(istTime.getTime() - istOffset);
 };
@@ -54,22 +54,38 @@ export default async (req: Request, res: Response, next: NextFunction) => {
       });
     }
 
-    const totalRevenue = (user.mainWallet || 0) + (user.commissionWallet || 0);
-    const profit = (user.mainWallet || 0) + (user.commissionWallet || 0);
+    if (user.currentLevelNumber !== undefined && user.currentLevelNumber >= 0 && !user.dailyIncome) {
+      const userLevel = await models.level.findOne({
+        levelNumber: user.currentLevelNumber,
+        isActive: true
+      });
+      if (userLevel) {
+        user.dailyIncome = userLevel.dailyIncome;
+        await user.save();
+      }
+    }
+
+    
+    const pendingWithdrawals = await models.withdrawal.aggregate([
+      { $match: { userId: user._id, status: 'pending' } },
+      { $group: { _id: null, total: { $sum: '$amount' } } }
+    ]);
+    const pendingWithdrawalAmount = pendingWithdrawals.length > 0 ? pendingWithdrawals[0].total : 0;
+
+    const totalRevenue = user.totalRevenue || 0;
 
     res.locals.userId = user._id;
 
 
     const startOfToday = getStartOfTodayIST();
-    const needsDailyReset = user.lastTaskCompletedAt && 
-                            new Date(user.lastTaskCompletedAt) < startOfToday;
+    const needsDailyReset = user.lastTaskCompletedAt &&
+      new Date(user.lastTaskCompletedAt) < startOfToday;
 
     if (needsDailyReset) {
-      const alreadyResetToday = user.lastIncomeResetDate && 
-                                new Date(user.lastIncomeResetDate) >= startOfToday;
-      
+      const alreadyResetToday = user.lastIncomeResetDate &&
+        new Date(user.lastIncomeResetDate) >= startOfToday;
+
       if (!alreadyResetToday && (user.todayIncome > 0 || user.todayTasksCompleted > 0)) {
-        console.log(`🔄 Resetting daily stats for user ${user._id} - Last activity was before today`);
         user.todayIncome = 0;
         user.todayTasksCompleted = 0;
         user.lastIncomeResetDate = new Date();
@@ -79,11 +95,10 @@ export default async (req: Request, res: Response, next: NextFunction) => {
 
 
     const startOfThisMonth = getStartOfThisMonthIST();
-    const needsMonthlyReset = user.lastMonthlyResetDate && 
-                              new Date(user.lastMonthlyResetDate) < startOfThisMonth;
+    const needsMonthlyReset = user.lastMonthlyResetDate &&
+      new Date(user.lastMonthlyResetDate) < startOfThisMonth;
 
     if (needsMonthlyReset && user.monthlyIncome > 0) {
-      console.log(`📅 Resetting monthly income for user ${user._id}`);
       user.monthlyIncome = 0;
       user.lastMonthlyResetDate = new Date();
       await user.save();
@@ -101,9 +116,9 @@ export default async (req: Request, res: Response, next: NextFunction) => {
           monthlyIncome: user.monthlyIncome || 0,
           totalRevenue: totalRevenue,
           totalWithdrawals: user.totalWithdrawals || 0,
+          pendingWithdrawals: pendingWithdrawalAmount,
           mainWallet: user.mainWallet || 0,
           commissionWallet: user.commissionWallet || 0,
-          profit: profit,
           todayTasksCompleted: user.todayTasksCompleted || 0,
         },
       },

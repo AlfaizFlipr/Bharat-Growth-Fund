@@ -73,9 +73,12 @@ const Login: React.FC = () => {
   return (
     <Flex justify="center" align="center" className={classes.container}>
       <Paper radius="md" p="xl" shadow="xl" className={classes.paper}>
-        <Title order={2} mb="lg" className={classes.title}>
-          Login
+        <Title order={2} mb="xs" className={classes.title}>
+          Bharat Growth Fund
         </Title>
+        <Text ta="center" mb="lg" size="sm" c="dimmed">
+          Secure your future with us
+        </Text>
         <TextInput
           label="Phone Number"
           type="number"

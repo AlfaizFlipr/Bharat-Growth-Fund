@@ -1,4 +1,4 @@
-// services/stripe.service.ts
+
 import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
@@ -93,7 +93,7 @@ export const stripeService = {
    * Create a payout from connected account to their bank
    */
   async createPayout(
-    amount: number, // Amount in cents (USD)
+    amount: number, 
     accountId: string,
     metadata: { withdrawalId: string }
   ) {
@@ -120,9 +120,9 @@ export const stripeService = {
    * In production, you might want to use a real-time exchange rate API
    */
   async getExchangeRate(): Promise<number> {
-    // Using a default rate - in production, integrate with a forex API
-    // like Open Exchange Rates, Fixer.io, or use Stripe's conversion
-    const defaultRate = 83; // 1 USD = 83 INR (approximate)
+    
+    
+    const defaultRate = 83; 
     return defaultRate;
   },
 

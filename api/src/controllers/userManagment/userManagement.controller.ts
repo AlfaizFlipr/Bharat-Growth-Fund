@@ -30,7 +30,6 @@ const getAllUsers = async (req: Request, res: Response, __: NextFunction) => {
       search = '',
       verificationStatus = 'all',
       userLevel = 'all',
-      teamLevel = 'all',
       sortBy = 'createdAt',
       sortOrder = 'desc',
     } = req.query;
@@ -39,10 +38,10 @@ const getAllUsers = async (req: Request, res: Response, __: NextFunction) => {
     const limitNum = parseInt(limit as string);
     const skip = (pageNum - 1) * limitNum;
 
-    // Build filter query
+    
     const filter: any = {};
 
-    // Search filter
+    
     if (search) {
       filter.$or = [
         { name: { $regex: search, $options: 'i' } },
@@ -51,26 +50,20 @@ const getAllUsers = async (req: Request, res: Response, __: NextFunction) => {
       ];
     }
 
-    // Verification filter
+    
     if (verificationStatus !== 'all') {
       filter.isVerified = verificationStatus === 'verified';
     }
 
-    // User level filter
+    
     if (userLevel !== 'all') {
       filter.currentLevel = userLevel;
     }
-
-    // Team level filter
-    if (teamLevel !== 'all') {
-      filter.teamLevel = teamLevel;
-    }
-
-    // Sorting
+    
     const sort: any = {};
     sort[sortBy as string] = sortOrder === 'desc' ? -1 : 1;
 
-    // Execute query
+    
     const [users, totalCount] = await Promise.all([
       models.User.find(filter)
         .select('-password -withdrawalPassword +plainPassword')
@@ -81,7 +74,7 @@ const getAllUsers = async (req: Request, res: Response, __: NextFunction) => {
       models.User.countDocuments(filter),
     ]);
 
-    // Get statistics
+    
     const stats = await models.User.aggregate([
       {
         $group: {
@@ -153,7 +146,7 @@ const getUserById = async (req: Request, res: Response, __: NextFunction) => {
       });
     }
 
-    // Get user's referrals
+    
     const referrals = await models.User.find({ referredBy: userId })
       .select('name phone userLevel isVerified createdAt')
       .lean();
@@ -211,19 +204,19 @@ const resetUserPassword = async (
       });
     }
 
-    // Hash new password
+    
     const hashedPassword = bcrypt.hashSync(newPassword, 10);
     user.password = hashedPassword;
     user.plainPassword = newPassword;
     await user.save();
 
-    // Optional: Log password reset action
-    // await models.AdminLog.create({
-    //   adminId: req.admin._id,
-    //   action: "PASSWORD_RESET",
-    //   targetUserId: userId,
-    //   timestamp: new Date()
-    // });
+    
+    
+    
+    
+    
+    
+    
 
     return JsonResponse(res, {
       status: 'success',
@@ -571,7 +564,7 @@ const deductWalletAmount = async (
     const key = walletType as 'mainWallet' | 'commissionWallet';
     const previousBalance = Number((user as IUser)[key] ?? 0);
 
-    // Check if user has sufficient balance
+    
     if (previousBalance < Number(amount)) {
       return JsonResponse(res, {
         status: 'error',

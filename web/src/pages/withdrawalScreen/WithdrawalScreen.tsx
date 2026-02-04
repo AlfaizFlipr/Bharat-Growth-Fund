@@ -1,27 +1,33 @@
-import React, { useState, useEffect } from "react";
+import React, { useMemo, useEffect, useState } from "react";
 import {
   Flex,
   Text,
   Button,
   Modal,
   TextInput,
-  Select,
   PasswordInput,
-  Card,
-  Badge,
+  Paper,
+  Divider,
   Loader,
+  Center,
+  Tabs,
+  Image,
+  Box,
+  Container,
+  Stack,
+  ThemeIcon,
+  FileInput,
+  Badge,
+  Alert,
   Radio,
   Group,
   ActionIcon,
-  Divider,
-  Alert,
-  Center,
-  Tabs,
-  FileInput,
-  Image,
+  Select,
+  Card,
+  Title,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import { useSelector } from "react-redux";
+import { notifications } from "@mantine/notifications";
 import {
   useWalletInfoQuery,
   useBankAccountsQuery,
@@ -32,21 +38,25 @@ import {
   useCreateWithdrawalMutation,
   useWithdrawalSchedule,
 } from "../../hooks/query/useWithdrawal.query";
-import classes from "./WithdrawalScreen.module.scss";
 import {
+  FaWallet,
   FaPlus,
-  FaRegTrashAlt,
-  FaInfoCircle,
-  FaCalendarAlt,
-  FaLock,
   FaUniversity,
   FaQrcode,
-  FaImage,
+  FaRegTrashAlt,
+  FaCalendarAlt,
   FaDollarSign,
-  FaWallet,
+  FaInfoCircle,
+  FaImage,
+  FaLock,
+  FaArrowRight,
+  FaShieldAlt,
+  FaCheckCircle,
 } from "react-icons/fa";
+import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import type { RootState } from "../../store/store";
+import classes from "./WithdrawalScreen.module.scss";
 
 const WithdrawalScreen: React.FC = () => {
   const [selectedWallet, setSelectedWallet] = useState("mainWallet");
@@ -55,7 +65,8 @@ const WithdrawalScreen: React.FC = () => {
   const [withdrawalPassword, setWithdrawalPassword] = useState("");
   const [activeTab, setActiveTab] = useState<string | null>("bank");
 
-  const isUSDUser = useSelector((state: RootState) => state.auth?.userData?.isUSDUser) || false;
+  const isUSDUser =
+    useSelector((state: RootState) => state.auth?.userData?.isUSDUser) || false;
 
   const [addAccountOpened, { open: openAddAccount, close: closeAddAccount }] =
     useDisclosure(false);
@@ -83,21 +94,12 @@ const WithdrawalScreen: React.FC = () => {
     280, 750, 1080, 2100, 3500, 55000, 108000, 150000,
   ];
 
-  const {
-    data: walletInfo,
-    isLoading: walletLoading,
-  } = useWalletInfoQuery();
-
-  const {
-    data: bankData = [],
-    isLoading: bankLoading,
-  } = useBankAccountsQuery();
-
+  const { data: walletInfo, isLoading: walletLoading } = useWalletInfoQuery();
+  const { data: bankData = [], isLoading: bankLoading } = useBankAccountsQuery();
   const { data: scheduleData, isLoading: scheduleLoading } =
     useWithdrawalSchedule();
 
   const bankAccounts = bankData?.accounts ?? [];
-
   const addBankMutation = useAddBankAccountMutation();
   const addQRMutation = useAddQRCodeMutation();
   const deleteBankMutation = useDeleteBankAccountMutation();
@@ -108,12 +110,10 @@ const WithdrawalScreen: React.FC = () => {
   const userLevel = scheduleData?.userLevel;
   const todaySchedule = scheduleData?.today;
 
-  /* 
-    TIME HELPER & VALIDATION 
-  */
+  // ---- TIME AND SCHEDULE LOGIC ----
   const timeToMinutes = (timeString: string) => {
     if (!timeString) return 0;
-    const [hours, minutes] = timeString.split(':').map(Number);
+    const [hours, minutes] = timeString.split(":").map(Number);
     return hours * 60 + minutes;
   };
 
@@ -122,7 +122,6 @@ const WithdrawalScreen: React.FC = () => {
     return now.getHours() * 60 + now.getMinutes();
   });
 
-  // Update time every minute
   useEffect(() => {
     const interval = setInterval(() => {
       const now = new Date();
@@ -131,8 +130,8 @@ const WithdrawalScreen: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const isTimeAllowed = React.useMemo(() => {
-    if (!todaySchedule || !todaySchedule.startTime || !todaySchedule.endTime) return false;
+  const isTimeAllowed = useMemo(() => {
+    if (!todaySchedule?.startTime || !todaySchedule?.endTime) return false;
     const start = timeToMinutes(todaySchedule.startTime);
     const end = timeToMinutes(todaySchedule.endTime);
     return currentTimeMinutes >= start && currentTimeMinutes <= end;
@@ -143,79 +142,51 @@ const WithdrawalScreen: React.FC = () => {
     Array.isArray(todaySchedule?.allowedLevels) &&
     todaySchedule.allowedLevels.includes(userLevel);
 
-  // Set default account on load
   useEffect(() => {
     if (bankAccounts.length > 0) {
       const defaultAcc = bankAccounts.find((a: any) => a.isDefault);
-      if (defaultAcc) {
-        setSelectedAccount(defaultAcc._id);
-      } else {
-        setSelectedAccount(bankAccounts[0]._id);
-      }
+      if (defaultAcc) setSelectedAccount(defaultAcc._id);
+      else setSelectedAccount(bankAccounts[0]._id);
     }
   }, [bankAccounts]);
 
-  // Validate bank form
+  // ---- FORM VALIDATION ----
   const validateBankForm = () => {
     const errors: Record<string, string> = {};
-
-    if (!accountForm.accountHolderName.trim()) {
+    if (!accountForm.accountHolderName.trim())
       errors.accountHolderName = "Account holder name is required";
-    } else if (accountForm.accountHolderName.length < 3) {
+    else if (accountForm.accountHolderName.length < 3)
       errors.accountHolderName = "Name must be at least 3 characters";
-    }
-
-    if (!accountForm.bankName.trim()) {
+    if (!accountForm.bankName.trim())
       errors.bankName = "Bank name is required";
-    }
-
-    if (!accountForm.accountNumber.trim()) {
+    if (!accountForm.accountNumber.trim())
       errors.accountNumber = "Account number is required";
-    } else if (!/^\d{9,18}$/.test(accountForm.accountNumber)) {
+    else if (!/^\d{9,18}$/.test(accountForm.accountNumber))
       errors.accountNumber = "Invalid account number (9-18 digits)";
-    }
-
-    if (!accountForm.confirmAccountNumber) {
+    if (!accountForm.confirmAccountNumber)
       errors.confirmAccountNumber = "Please confirm account number";
-    } else if (accountForm.accountNumber !== accountForm.confirmAccountNumber) {
+    else if (accountForm.accountNumber !== accountForm.confirmAccountNumber)
       errors.confirmAccountNumber = "Account numbers do not match";
-    }
-
-    if (!accountForm.ifscCode.trim()) {
+    if (!accountForm.ifscCode.trim())
       errors.ifscCode = "IFSC code is required";
-    } else if (
-      !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(accountForm.ifscCode.toUpperCase())
-    ) {
+    else if (!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(accountForm.ifscCode.toUpperCase()))
       errors.ifscCode = "Invalid IFSC code format";
-    }
-
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
-  // Validate QR form
   const validateQRForm = () => {
     const errors: Record<string, string> = {};
-
-    if (!qrForm.qrName.trim()) {
-      errors.qrName = "QR name is required";
-    }
-
-    if (!qrForm.qrImage) {
-      errors.qrImage = "QR code image is required";
-    }
-
+    if (!qrForm.qrName.trim()) errors.qrName = "QR name is required";
+    if (!qrForm.qrImage) errors.qrImage = "QR code image is required";
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
+  // ---- ACCOUNT HANDLERS ----
   const handleAddBankAccount = () => {
     if (!validateBankForm()) return;
-
-    if (bankAccounts.length >= 4) {
-      return;
-    }
-
+    if (bankAccounts.length >= 4) return;
     const payload = {
       accountHolderName: accountForm.accountHolderName.trim(),
       bankName: accountForm.bankName.trim(),
@@ -225,7 +196,6 @@ const WithdrawalScreen: React.FC = () => {
       accountType: accountForm.accountType,
       isDefault: bankAccounts.length === 0,
     };
-
     addBankMutation.mutate(payload, {
       onSuccess: () => {
         closeAddAccount();
@@ -245,26 +215,17 @@ const WithdrawalScreen: React.FC = () => {
 
   const handleAddQRCode = () => {
     if (!validateQRForm()) return;
-
-    if (bankAccounts.filter((a: any) => a.accountType === 'qr').length >= 4) {
+    if (bankAccounts.filter((a: any) => a.accountType === "qr").length >= 4)
       return;
-    }
-
     const formData = new FormData();
-    formData.append('qrName', qrForm.qrName.trim());
-    formData.append('upiId', qrForm.upiId.trim());
-    formData.append('qrCodeImage', qrForm.qrImage!);
-    formData.append('isDefault', String(bankAccounts.length === 0));
-
+    formData.append("qrName", qrForm.qrName.trim());
+    formData.append("upiId", qrForm.upiId.trim());
+    formData.append("qrCodeImage", qrForm.qrImage!);
+    formData.append("isDefault", String(bankAccounts.length === 0));
     addQRMutation.mutate(formData, {
       onSuccess: () => {
         closeAddAccount();
-        setQrForm({
-          qrName: "",
-          upiId: "",
-          qrImage: null,
-          qrPreview: "",
-        });
+        setQrForm({ qrName: "", upiId: "", qrImage: null, qrPreview: "" });
         setFormErrors({});
       },
     });
@@ -274,19 +235,15 @@ const WithdrawalScreen: React.FC = () => {
     if (file) {
       setQrForm({ ...qrForm, qrImage: file });
       const reader = new FileReader();
-      reader.onloadend = () => {
+      reader.onloadend = () =>
         setQrForm((prev) => ({ ...prev, qrPreview: reader.result as string }));
-      };
       reader.readAsDataURL(file);
-    } else {
-      setQrForm({ ...qrForm, qrImage: null, qrPreview: "" });
-    }
+    } else setQrForm({ ...qrForm, qrImage: null, qrPreview: "" });
   };
 
   const handleDeleteAccount = (accountId: string) => {
-    if (window.confirm("Are you sure you want to delete this account?")) {
+    if (window.confirm("Are you sure you want to delete this account?"))
       deleteBankMutation.mutate(accountId);
-    }
   };
 
   const handleSetDefault = (accountId: string) => {
@@ -295,22 +252,25 @@ const WithdrawalScreen: React.FC = () => {
 
   const handleWithdrawal = () => {
     const amount = selectedAmount;
-    // For USD users, bank account is optional (money goes to USD Wallet)
     if (!amount || amount < 280 || !withdrawalPassword) return;
-    if (!isUSDUser && !selectedAccount) return; // Only require bank account for non-USD users
-
+    if (!isUSDUser && !selectedAccount) return;
     const selectedWalletBalance =
       selectedWallet === "mainWallet"
         ? walletInfo?.mainWallet
         : walletInfo?.commissionWallet;
-
-    if (amount > selectedWalletBalance) return;
-
+    if (amount > selectedWalletBalance) {
+      notifications.show({
+        title: "Error",
+        message: "Insufficient balance",
+        color: "red",
+      });
+      return;
+    }
     createWithdrawalMutation.mutate(
       {
         walletType: selectedWallet,
         amount,
-        bankAccountId: isUSDUser ? undefined : selectedAccount, // No bank account for USD users
+        bankAccountId: isUSDUser ? undefined : selectedAccount,
         withdrawalPassword,
       },
       {
@@ -322,377 +282,436 @@ const WithdrawalScreen: React.FC = () => {
     );
   };
 
-  const getSelectedWalletBalance = () => {
-    return selectedWallet === "mainWallet"
+  const getSelectedWalletBalance = () =>
+    selectedWallet === "mainWallet"
       ? walletInfo?.mainWallet || 0
       : walletInfo?.commissionWallet || 0;
-  };
 
   if (walletLoading || bankLoading || scheduleLoading) {
     return (
       <Center h="100vh">
-        <Loader size="lg" />
+        <Loader size="lg" color="#0f172a" />
       </Center>
     );
   }
 
-
   return (
-    <div className={classes.container}>
-      <Text className={classes.title}>Withdrawal</Text>
-
-      {/* 
-          CASE 1: Not allowed today by level/day 
-        */}
-      {!isTodayAllowed && (
-        <Alert
-          icon={<FaLock />}
-          color="red"
-          title="Withdrawals Not Available Today"
-          mb="md"
-        >
-          <Text size="sm">
-            Your Apple Level {userLevel} is not allowed to withdraw today.
-            Please check your withdrawal schedule below.
-          </Text>
-        </Alert>
-      )}
-
-      {/* 
-          CASE 2: Allowed today, but currently outside of time window 
-        */}
-      {isTodayAllowed && todaySchedule && !isTimeAllowed && (
-        <Alert
-          icon={<FaLock />}
-          color="orange"
-          title="Withdrawals Closed For Now"
-          mb="md"
-        >
-          <Text size="sm">
-            Withdrawals are currently closed. You can withdraw today between{" "}
-            <strong>{todaySchedule.startTime} - {todaySchedule.endTime}</strong>.
-          </Text>
-        </Alert>
-      )}
-
-      {/* 
-          CASE 3: Allowed Today AND Inside Time Window
-        */}
-      {isTodayAllowed && todaySchedule && isTimeAllowed && (
-        <Alert
-          icon={<FaCalendarAlt />}
-          color="green"
-          title="Withdrawals Available"
-          mb="md"
-        >
-          <Text size="sm">
-            Withdrawal window is open ({todaySchedule.startTime} - {todaySchedule.endTime}).
-          </Text>
-        </Alert>
-      )}
-
-      {isTodayAllowed && isTimeAllowed && (
-        <>
-          {/* USD User Info Banner */}
-          {isUSDUser && (
-            <Alert
-              icon={<FaDollarSign />}
-              color="2d1b4e"
+    <div className={classes.withdrawalScreen}>
+      <div className={classes.headerBanner}>
+        <div className={classes.container}>
+          <Group justify="space-between" align="center">
+            <Stack gap={2}>
+              <Title order={2} style={{ color: "#fff" }}>
+                Institutional Disbursal
+              </Title>
+              <Text size="xs" style={{ color: "rgba(255,255,255,0.6)" }}>
+                Capital Liquidation Node
+              </Text>
+            </Stack>
+            <ThemeIcon
               variant="light"
-              mb="md"
-              title="USD Withdrawal Mode"
+              color="rgba(255,255,255,0.1)"
+              size={48}
+              radius="xl"
             >
-              <Text size="sm" mb="xs">
-                As a USD-enabled user, your withdrawal will be credited to your <strong>USD Wallet</strong> after admin approval.
+              <FaWallet size={20} color="#fff" />
+            </ThemeIcon>
+          </Group>
+        </div>
+      </div>
+
+      <Container className={classes.container} size="sm">
+        <Stack gap="lg">
+          {/* ---- Alerts ---- */}
+          {!isTodayAllowed && (
+            <Alert
+              icon={<FaLock />}
+              color="red"
+              variant="light"
+              className={classes.alert}
+              title="Withdrawals Not Available Today"
+            >
+              <Text size="sm">
+                Your level {userLevel} is not allowed to withdraw today.
+                Please check the schedule below for your next available day.
               </Text>
-              <Text size="sm" mb="xs">
-                You can then withdraw from your USD Wallet to your Stripe-connected bank account.
-              </Text>
-              <Link to="/usd-withdrawal" style={{ textDecoration: 'none' }}>
-                <Button
-                  size="xs"
-                  variant="light"
-                  color="#2d1b4e"
-                  leftSection={<FaWallet size={12} />}
-                  mt="xs"
-                >
-                  Go to USD Wallet
-                </Button>
-              </Link>
             </Alert>
           )}
 
-          <Card shadow="sm" p="md" radius="md" className={classes.card}>
-            <Text fw={600} mb="xs">
-              Select Wallet
-            </Text>
-            <Radio.Group
-              value={selectedWallet}
-              onChange={(value) => {
-                setSelectedWallet(value);
-                setSelectedAmount(null);
-              }}
+          {isTodayAllowed && todaySchedule && !isTimeAllowed && (
+            <Alert
+              icon={<FaLock />}
+              color="orange"
+              variant="light"
+              className={classes.alert}
+              title="Withdrawal Window Closed"
             >
-              <Group>
-                <Radio
-                  value="mainWallet"
-                  label={`Prime wallet: ₹${walletInfo?.mainWallet?.toFixed(2) || 0
-                    }`}
-                />
-                <Radio
-                  value="commissionWallet"
-                  label={`Task Wallet: ₹${walletInfo?.commissionWallet?.toFixed(2) || 0
-                    }`}
-                />
-              </Group>
-            </Radio.Group>
-            <Text size="xs" c="dimmed" mt="xs">
-              Available Balance: ₹{getSelectedWalletBalance().toFixed(2)}
-            </Text>
-          </Card>
-
-          {/* Bank Accounts & QR Codes - Only show for non-USD users */}
-          {!isUSDUser && (
-            <Card shadow="sm" p="md" radius="md" className={classes.card}>
-              <Flex justify="space-between" align="center" mb="xs">
-                <Text fw={600}>Withdrawal Method</Text>
-                <Button
-                  size="xs"
-                  leftSection={<FaPlus size={14} />}
-                  onClick={openAddAccount}
-                  color="#2d1b4e"
-                  disabled={bankAccounts.length >= 4}
-                >
-                  Add Method ({bankAccounts.length}/4)
-                </Button>
-              </Flex>
-
-              {bankAccounts.length === 0 ? (
-                <Alert color="#2d1b4e" icon={<FaInfoCircle />} mt="sm">
-                  No withdrawal methods added yet. Please add a bank account or QR code to proceed.
-                </Alert>
-              ) : (
-                <Flex direction="column" gap="sm">
-                  {bankAccounts.map((acc: any) => (
-                    <Card
-                      key={acc._id}
-                      radius="md"
-                      withBorder
-                      p="md"
-                      className={`${classes.bankCard} ${selectedAccount === acc._id ? classes.activeCard : ""
-                        }`}
-                      onClick={() => setSelectedAccount(acc._id)}
-                      style={{ cursor: "pointer" }}
-                    >
-                      <Flex align="center" justify="space-between" gap="md">
-                        {/* Left: Image/Icon + Text */}
-                        <Flex align="center" gap="md" style={{ flex: 1, minWidth: 0 }}>
-                          {acc.accountType === 'qr' && acc.qrCodeImage ? (
-                            <div style={{
-                              width: "60px",
-                              height: "60px",
-                              borderRadius: 8,
-                              flexShrink: 0,
-                              border: '1px solid #e0e0e0'
-                            }}>
-                              <Image
-                                src={`${import.meta.env.VITE_PUBLIC_BASE_URL}/${acc.qrCodeImage}`}
-                                alt="QR Code"
-                                width={60}
-                                height={60}
-                                fit="contain"
-                                radius="sm"
-                              />
-                            </div>
-                          ) : (
-                            <div style={{
-                              width: 50,
-                              height: 50,
-                              borderRadius: 8,
-                              background: 'linear-gradient(135deg, #f1f3f5 0%, #e9ecef 100%)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              flexShrink: 0
-                            }}>
-                              {acc.accountType === 'qr' ? (
-                                <FaQrcode size={24} color="#2d1b4e" />
-                              ) : (
-                                <FaUniversity size={22} color="#2d1b4e" />
-                              )}
-                            </div>
-                          )}
-
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <Flex align="center" gap="xs" mb={4}>
-                              <Text size="md" fw={600} c="#2d1b4e" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                {acc.bankName}
-                              </Text>
-                              {acc.isDefault && (
-                                <Badge
-                                  color="green"
-                                  variant="filled"
-                                  size="sm"
-                                  style={{ flexShrink: 0 }}
-                                >
-                                  Default
-                                </Badge>
-                              )}
-                            </Flex>
-                            <Text size="sm" c="dimmed" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                              {acc.accountHolderName}
-                            </Text>
-                            {acc.accountType !== 'qr' && (
-                              <Text size="xs" c="dimmed" style={{ fontFamily: 'monospace' }} mt={2}>
-                                ••••{acc.accountNumber?.slice(-4)}
-                              </Text>
-                            )}
-                          </div>
-                        </Flex>
-
-                        {/* Right: Action Buttons */}
-                        <Flex gap="xs" align="center" style={{ flexShrink: 0 }}>
-                          {!acc.isDefault && (
-                            <Button
-                              size="xs"
-                              variant="light"
-                              color="#2d1b4e"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleSetDefault(acc._id);
-                              }}
-                            >
-                              Set Default
-                            </Button>
-                          )}
-                          <ActionIcon
-                            variant="subtle"
-                            color="red"
-                            size="lg"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteAccount(acc._id);
-                            }}
-                            title="Delete Account"
-                          >
-                            <FaRegTrashAlt size={16} />
-                          </ActionIcon>
-                        </Flex>
-                      </Flex>
-                    </Card>
-                  ))}
-                </Flex>
-              )}
-            </Card>
+              <Text size="sm">
+                Withdrawals open today between{" "}
+                <strong>
+                  {todaySchedule.startTime} - {todaySchedule.endTime}
+                </strong>
+                .
+              </Text>
+            </Alert>
           )}
 
-          {/* Withdrawal Amount */}
-          <Card shadow="sm" p="md" radius="md" className={classes.card}>
-            <Flex justify="space-between" align="center" mb="sm">
-              <Text fw={600}>Select Withdrawal Amount</Text>
-              <Badge color="2d1b4e" variant="light" size="sm">
-                Balance: ₹{getSelectedWalletBalance().toLocaleString()}
-              </Badge>
-            </Flex>
+          {isTodayAllowed && todaySchedule && isTimeAllowed && (
+            <Alert
+              icon={<FaCalendarAlt />}
+              color="green"
+              variant="light"
+              className={classes.alert}
+              title="Withdrawal Window Open"
+            >
+              <Text size="sm">
+                You can withdraw now. Window closes at{" "}
+                <strong>{todaySchedule.endTime}</strong>.
+              </Text>
+            </Alert>
+          )}
 
-            <Text size="xs" c="dimmed" mb="md">
-              Choose from the available withdrawal amounts below.
-            </Text>
-
-            <div className={classes.amountGrid}>
-              {predefinedAmounts.map((amt) => {
-                const disabled = amt > getSelectedWalletBalance();
-                const isSelected = selectedAmount === amt;
-
-                return (
-                  <div
-                    key={amt}
-                    className={`${classes.amountCard} ${isSelected ? classes.amountSelected : ""
-                      } ${disabled ? classes.amountDisabled : ""}`}
-                    onClick={() => !disabled && setSelectedAmount(amt)}
-                  >
-                    <Text fw={700} size="md">
-                      ₹{amt.toLocaleString()}
-                    </Text>
-                    <Text size="xs" c="dimmed">
-                      {disabled ? "Insufficient" : "Available"}
-                    </Text>
-                  </div>
-                );
-              })}
-            </div>
-
-            {selectedAmount && (
-              <Alert
-                color="green"
-                mt="md"
-                variant="light"
-                icon={<FaCalendarAlt />}
-              >
-                <Text size="sm">
-                  You have selected{" "}
-                  <strong>₹{selectedAmount.toLocaleString()}</strong> for
-                  withdrawal.
+          {/* ---- Balance Card ---- */}
+          <Paper className={classes.balanceCard}>
+            <Stack gap="lg">
+              <Box>
+                <Text size="xs" c="dimmed" fw={800} style={{ letterSpacing: 1.2 }}>
+                  TOTAL OPERATIONAL BALANCE
                 </Text>
-              </Alert>
-            )}
+                <Flex align="center" justify="space-between" mt={4}>
+                  <Text size="38px" fw={900} c="#0f172a" ff="Montserrat">
+                    ₹{walletInfo?.mainWallet?.toLocaleString() || "0"}
+                  </Text>
+                  <ThemeIcon variant="light" color="indigo" size="xl" radius="lg">
+                    <FaShieldAlt size={24} />
+                  </ThemeIcon>
+                </Flex>
+              </Box>
+
+              <Divider color="gray.1" />
+
+              <Flex justify="space-between" align="center">
+                <Box>
+                  <Text size="10px" c="dimmed" fw={800}>
+                    MINIMUM LIQUIDATION
+                  </Text>
+                  <Text fw={800} size="sm">
+                    ₹280.00
+                  </Text>
+                </Box>
+                <Box ta="right">
+                  <Text size="10px" c="dimmed" fw={800}>
+                    SETTLEMENT SLA
+                  </Text>
+                  <Text fw={800} size="sm">
+                    24-48 Business Hours
+                  </Text>
+                </Box>
+              </Flex>
+            </Stack>
+          </Paper>
+
+          {/* ---- Withdrawal Section ---- */}
+          {isTodayAllowed && isTimeAllowed && (
+            <Stack gap="lg">
+              {isUSDUser && (
+                <Alert
+                  icon={<FaDollarSign />}
+                  color="indigo"
+                  variant="light"
+                  className={classes.alert}
+                  title="Global Treasury Sync"
+                >
+                  <Text size="sm" mb="xs">
+                    Institutional accounts are settled via the{" "}
+                    <strong>USD Ledger</strong>. Your INR disbursal will be
+                    appraised at the daily market rate.
+                  </Text>
+                  <Button
+                    component={Link}
+                    to="/usd-withdrawal"
+                    size="xs"
+                    variant="light"
+                    color="indigo"
+                    leftSection={<FaWallet size={12} />}
+                    mt="xs"
+                  >
+                    Manage USD Node
+                  </Button>
+                </Alert>
+              )}
+
+              {/* Wallet Selection */}
+              <Card className={classes.card} p="xl">
+                <Text fw={700} size="sm" mb="md" c="dimmed">
+                  1. SELECT SOURCE LEDGER
+                </Text>
+                <Radio.Group
+                  value={selectedWallet}
+                  onChange={(v) => {
+                    setSelectedWallet(v);
+                    setSelectedAmount(null);
+                  }}
+                >
+                  <Stack gap="sm">
+                    <Paper
+                      withBorder
+                      p="md"
+                      radius="md"
+                      className={
+                        selectedWallet === "mainWallet" ? classes.activeCard : ""
+                      }
+                      onClick={() => setSelectedWallet("mainWallet")}
+                      style={{ cursor: "pointer" }}
+                    >
+                      <Group justify="space-between">
+                        <Radio
+                          value="mainWallet"
+                          label="Prime Operational Balance"
+                          color="#0f172a"
+                        />
+                        <Text fw={700}>
+                          ₹{walletInfo?.mainWallet?.toLocaleString()}
+                        </Text>
+                      </Group>
+                    </Paper>
+                    <Paper
+                      withBorder
+                      p="md"
+                      radius="md"
+                      className={
+                        selectedWallet === "commissionWallet"
+                          ? classes.activeCard
+                          : ""
+                      }
+                      onClick={() => setSelectedWallet("commissionWallet")}
+                      style={{ cursor: "pointer" }}
+                    >
+                      <Group justify="space-between">
+                        <Radio
+                          value="commissionWallet"
+                          label="Task Reward Yield"
+                          color="#0f172a"
+                        />
+                        <Text fw={700}>
+                          ₹{walletInfo?.commissionWallet?.toLocaleString()}
+                        </Text>
+                      </Group>
+                    </Paper>
+                  </Stack>
+                </Radio.Group>
+              </Card>
+
+              {/* Bank Accounts */}
+              {!isUSDUser && (
+                <Card className={classes.card} p="xl">
+                  <Group justify="space-between" mb="md">
+                    <Text fw={700} size="sm" c="dimmed">
+                      2. SETTLEMENT DESTINATION
+                    </Text>
+                    <Button
+                      size="xs"
+                      variant="subtle"
+                      leftSection={<FaPlus />}
+                      onClick={openAddAccount}
+                      disabled={bankAccounts.length >= 4}
+                    >
+                      Add Endpoint ({bankAccounts.length}/4)
+                    </Button>
+                  </Group>
+
+                  {bankAccounts.length === 0 ? (
+                    <Alert color="gray" icon={<FaInfoCircle />} variant="light">
+                      No settlement protocols defined. Please add a bank node or QR
+                      endpoint.
+                    </Alert>
+                  ) : (
+                    <Stack gap="sm">
+                      {bankAccounts.map((acc: any) => (
+                        <Paper
+                          key={acc._id}
+                          className={`${classes.bankCard} ${
+                            selectedAccount === acc._id ? classes.activeCard : ""
+                          }`}
+                          p="md"
+                          onClick={() => setSelectedAccount(acc._id)}
+                        >
+                          <Group justify="space-between" wrap="nowrap">
+                            <Group gap="md">
+                              <ThemeIcon
+                                variant="light"
+                                color="indigo"
+                                size={40}
+                                radius="md"
+                              >
+                                {acc.accountType === "qr" ? (
+                                  <FaQrcode size={18} />
+                                ) : (
+                                  <FaUniversity size={18} />
+                                )}
+                              </ThemeIcon>
+                              <div>
+                                <Group gap={6}>
+                                  <Text fw={700} size="sm">
+                                    {acc.bankName || acc.qrName}
+                                  </Text>
+                                  {acc.isDefault && (
+                                    <Badge size="xs" color="green">
+                                      Primary
+                                    </Badge>
+                                  )}
+                                </Group>
+                                <Text size="xs" c="dimmed">
+                                  {acc.accountHolderName}
+                                </Text>
+                              </div>
+                            </Group>
+                            <Group gap="xs">
+                              {!acc.isDefault && (
+                                <ActionIcon
+                                  variant="light"
+                                  color="indigo"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSetDefault(acc._id);
+                                  }}
+                                >
+                                  <FaShieldAlt size={14} />
+                                </ActionIcon>
+                              )}
+                              <ActionIcon
+                                variant="light"
+                                color="red"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteAccount(acc._id);
+                                }}
+                              >
+                                <FaRegTrashAlt size={14} />
+                              </ActionIcon>
+                            </Group>
+                          </Group>
+                        </Paper>
+                      ))}
+                    </Stack>
+                  )}
+                </Card>
+              )}
+
+              {/* Amount Selection */}
+              <Card className={classes.card} p="xl">
+                <Text fw={700} size="sm" mb="md" c="dimmed">
+                  3. LIQUIDATION AMOUNT
+                </Text>
+                <div className={classes.amountGrid}>
+                  {predefinedAmounts.map((amt) => {
+                    const disabled = amt > getSelectedWalletBalance();
+                    const isSelected = selectedAmount === amt;
+                    return (
+                      <div
+                        key={amt}
+                        className={`${classes.amountCard} ${
+                          isSelected ? classes.amountSelected : ""
+                        } ${disabled ? classes.amountDisabled : ""}`}
+                        onClick={() => !disabled && setSelectedAmount(amt)}
+                      >
+                        <Text fw={700} size="md">
+                          ₹{amt.toLocaleString()}
+                        </Text>
+                        <Text size="xs" opacity={0.6}>
+                          {disabled ? "Insufficient" : "Available"}
+                        </Text>
+                      </div>
+                    );
+                  })}
+                </div>
+                {selectedAmount && (
+                  <Alert color="green" variant="light" mt="md" icon={<FaCheckCircle />}>
+                    <Text size="sm">
+                      Disbursal of <strong>₹{selectedAmount.toLocaleString()}</strong>{" "}
+                      selected.
+                    </Text>
+                  </Alert>
+                )}
+              </Card>
+
+              {/* Security Input */}
+              <Card className={classes.card} p="xl">
+                <Text fw={700} size="sm" mb="md" c="dimmed">
+                  4. SECURITY CLEARANCE
+                </Text>
+                <Stack gap="lg">
+                  <PasswordInput
+                    placeholder="Enter Security Lock"
+                    value={withdrawalPassword}
+                    onChange={(e) => setWithdrawalPassword(e.target.value)}
+                    size="md"
+                    radius="md"
+                    label="Disbursal Password"
+                  />
+                  <Button
+                    className={classes.submitBtn}
+                    onClick={handleWithdrawal}
+                    loading={createWithdrawalMutation.isPending}
+                    disabled={
+                      !selectedAmount ||
+                      (!isUSDUser && !selectedAccount) ||
+                      !withdrawalPassword
+                    }
+                    leftSection={isUSDUser ? <FaDollarSign /> : <FaArrowRight />}
+                    fullWidth
+                  >
+                    {isUSDUser
+                      ? `Request USD Sink ${
+                          selectedAmount ? `(₹${selectedAmount.toLocaleString()})` : ""
+                        }`
+                      : `Finalize Disbursal ${
+                          selectedAmount ? `(₹${selectedAmount.toLocaleString()})` : ""
+                        }`}
+                  </Button>
+                </Stack>
+              </Card>
+            </Stack>
+          )}
+
+          {/* ---- Always Show Schedule ---- */}
+          <Card className={classes.card} p="xl" mb="xl">
+            <Group gap="md" mb="md">
+              <ThemeIcon variant="light" color="indigo" radius="md">
+                <FaCalendarAlt />
+              </ThemeIcon>
+              <Text fw={700}>Global Liquidation Schedule</Text>
+            </Group>
+            <Stack gap={0}>
+              {schedule
+                .filter((s: any) => s.isActive && s.allowedLevels?.length > 0)
+                .map((day: any) => (
+                  <div key={day.day} className={classes.scheduleItem}>
+                    <Text size="sm" fw={600}>
+                      {day.day}
+                    </Text>
+                    <Group gap="xs">
+                      <Badge size="xs" variant="outline">
+                        Levels: {day.allowedLevels.join(", ")}
+                      </Badge>
+                      <Text size="xs" c="dimmed">
+                        {day.startTime} - {day.endTime}
+                      </Text>
+                    </Group>
+                  </div>
+                ))}
+            </Stack>
+            <Alert color="indigo" icon={<FaInfoCircle />} mt="md" variant="light">
+              <Text size="xs">
+                Disbursals are processed according to node hierarchy. Please ensure
+                your settlement endpoints are verified to prevent transaction failure.
+              </Text>
+            </Alert>
           </Card>
+        </Stack>
+      </Container>
 
-          {/* Withdrawal Password */}
-          <Card shadow="sm" p="md" radius="md" className={classes.card}>
-            <Text fw={600} mb="xs">
-              Withdrawal Password
-            </Text>
-            <PasswordInput
-              placeholder="Enter withdrawal password"
-              value={withdrawalPassword}
-              onChange={(e) => setWithdrawalPassword(e.target.value)}
-            />
-          </Card>
-
-          {/* Submit */}
-          <Button
-            fullWidth
-            mt="md"
-            color="#2d1b4e"
-            onClick={handleWithdrawal}
-            loading={createWithdrawalMutation.isPending}
-            disabled={!selectedAmount || (!isUSDUser && !selectedAccount) || !withdrawalPassword}
-            leftSection={isUSDUser ? <FaDollarSign /> : undefined}
-          >
-            {isUSDUser
-              ? `Request Withdrawal to USD Wallet ${selectedAmount ? `₹${selectedAmount.toLocaleString()}` : ""}`
-              : `Submit Withdrawal Request ${selectedAmount ? `₹${selectedAmount.toLocaleString()}` : ""}`
-            }
-          </Button>
-        </>
-      )}
-
-      {/* Withdrawal Schedule */}
-      <Card shadow="sm" p="md" radius="md" className={classes.card} mt="md">
-        <Text fw={600} mb="sm" ta="center">
-          📅 Withdrawal Schedule
-        </Text>
-        <Divider mb="sm" />
-        {schedule
-          .filter((s: any) => s.isActive && s.allowedLevels?.length > 0)
-          .map((day: any) => (
-            <Text key={day.day} size="sm" mb="xs">
-              <strong>{day.day}:</strong> Apple Levels{" "}
-              {day.allowedLevels.join(", ")} — {day.startTime}–{day.endTime}
-            </Text>
-          ))}
-
-        <Alert color="2d1b4e" icon={<FaInfoCircle />} mt="md">
-          <Text size="sm">
-            Please make the withdrawal on the corresponding date according to
-            your Apple level. If you encounter any problems with withdrawals,
-            please contact your work manager immediately.
-          </Text>
-        </Alert>
-      </Card>
-
-      {/* Add Account/QR Modal */}
+      {/* ---- Modal ---- */}
       <Modal
         opened={addAccountOpened}
         onClose={() => {
@@ -700,121 +719,92 @@ const WithdrawalScreen: React.FC = () => {
           setFormErrors({});
           setActiveTab("bank");
         }}
-        title="Add Withdrawal Method"
+        title="Register Settlement Endpoint"
         centered
+        className={classes.modal}
         size="md"
       >
-        <Tabs value={activeTab} onChange={setActiveTab} color="#2d1b4e">
-          <Tabs.List>
+        <Tabs value={activeTab} onChange={setActiveTab} color="#0f172a">
+          <Tabs.List grow mb="xl">
             <Tabs.Tab value="bank" leftSection={<FaUniversity size={14} />}>
-              Bank Account
+              Bank Node
             </Tabs.Tab>
             <Tabs.Tab value="qr" leftSection={<FaQrcode size={14} />}>
-              QR Code
+              QR Endpoint
             </Tabs.Tab>
           </Tabs.List>
 
-          <Tabs.Panel value="bank" pt="md">
-            <Flex direction="column" gap="md">
+          <Tabs.Panel value="bank">
+            <Stack gap="md">
               <TextInput
-                label="Account Holder Name"
-                placeholder="Enter full name as per bank"
+                label="Proprietor Name"
+                placeholder="Full name as per bank"
                 value={accountForm.accountHolderName}
-                onChange={(e) => {
+                onChange={(e) =>
                   setAccountForm({
                     ...accountForm,
                     accountHolderName: e.target.value,
-                  });
-                  if (formErrors.accountHolderName) {
-                    setFormErrors({ ...formErrors, accountHolderName: "" });
-                  }
-                }}
+                  })
+                }
                 error={formErrors.accountHolderName}
-                required
               />
               <TextInput
-                label="Bank Name"
-                placeholder="Enter bank name"
+                label="Bank Institution"
+                placeholder="e.g. ICICI Bank"
                 value={accountForm.bankName}
-                onChange={(e) => {
-                  setAccountForm({ ...accountForm, bankName: e.target.value });
-                  if (formErrors.bankName) {
-                    setFormErrors({ ...formErrors, bankName: "" });
-                  }
-                }}
+                onChange={(e) =>
+                  setAccountForm({ ...accountForm, bankName: e.target.value })
+                }
                 error={formErrors.bankName}
-                required
               />
               <TextInput
                 label="Account Number"
-                placeholder="Enter account number"
+                placeholder="Enter bank account number"
                 value={accountForm.accountNumber}
-                onChange={(e) => {
-                  const value = e.target.value.replace(/\D/g, "");
-                  setAccountForm({ ...accountForm, accountNumber: value });
-                  if (formErrors.accountNumber) {
-                    setFormErrors({ ...formErrors, accountNumber: "" });
-                  }
-                }}
-                error={formErrors.accountNumber}
-                maxLength={18}
-                required
-              />
-              <TextInput
-                label="Confirm Account Number"
-                placeholder="Re-enter account number"
-                value={accountForm.confirmAccountNumber}
-                onChange={(e) => {
-                  const value = e.target.value.replace(/\D/g, "");
+                onChange={(e) =>
                   setAccountForm({
                     ...accountForm,
-                    confirmAccountNumber: value,
-                  });
-                  if (formErrors.confirmAccountNumber) {
-                    setFormErrors({ ...formErrors, confirmAccountNumber: "" });
-                  }
-                }}
-                error={formErrors.confirmAccountNumber}
+                    accountNumber: e.target.value.replace(/\D/g, ""),
+                  })
+                }
+                error={formErrors.accountNumber}
                 maxLength={18}
-                required
               />
               <TextInput
-                label="IFSC Code"
-                placeholder="Enter IFSC code"
+                label="Verify Number"
+                placeholder="Repeat account number"
+                value={accountForm.confirmAccountNumber}
+                onChange={(e) =>
+                  setAccountForm({
+                    ...accountForm,
+                    confirmAccountNumber: e.target.value.replace(/\D/g, ""),
+                  })
+                }
+                error={formErrors.confirmAccountNumber}
+                maxLength={18}
+              />
+              <TextInput
+                label="Routing Code (IFSC)"
+                placeholder="e.g. ICIC0001234"
                 value={accountForm.ifscCode}
-                onChange={(e) => {
+                onChange={(e) =>
                   setAccountForm({
                     ...accountForm,
                     ifscCode: e.target.value.toUpperCase(),
-                  });
-                  if (formErrors.ifscCode) {
-                    setFormErrors({ ...formErrors, ifscCode: "" });
-                  }
-                }}
+                  })
+                }
                 error={formErrors.ifscCode}
                 maxLength={11}
-                required
-              />
-              <TextInput
-                label="Branch Name (Optional)"
-                placeholder="Enter branch name"
-                value={accountForm.branchName}
-                onChange={(e) =>
-                  setAccountForm({ ...accountForm, branchName: e.target.value })
-                }
               />
               <Select
-                label="Account Type"
+                label="Ledger Type"
                 data={[
-                  { value: "savings", label: "Savings Account" },
-                  { value: "current", label: "Current Account" },
+                  { value: "savings", label: "Savings" },
+                  { value: "current", label: "Current" },
                 ]}
                 value={accountForm.accountType}
                 onChange={(v) =>
-                  setAccountForm({
-                    ...accountForm,
-                    accountType: v || "savings",
-                  })
+                  setAccountForm({ ...accountForm, accountType: v || "savings" })
                 }
               />
               <Button
@@ -822,73 +812,62 @@ const WithdrawalScreen: React.FC = () => {
                 onClick={handleAddBankAccount}
                 loading={addBankMutation.isPending}
                 mt="md"
-                color="#2d1b4e"
+                color="#0f172a"
+                radius="md"
               >
-                Add Bank Account
+                Register Bank Node
               </Button>
-            </Flex>
+            </Stack>
           </Tabs.Panel>
 
-          <Tabs.Panel value="qr" pt="md">
-            <Flex direction="column" gap="md">
+          <Tabs.Panel value="qr">
+            <Stack gap="md">
               <TextInput
-                label="QR Name/Label"
-                placeholder="e.g., PhonePe, Google Pay, etc."
+                label="Endpoint Label"
+                placeholder="e.g. PhonePe QR"
                 value={qrForm.qrName}
-                onChange={(e) => {
-                  setQrForm({ ...qrForm, qrName: e.target.value });
-                  if (formErrors.qrName) {
-                    setFormErrors({ ...formErrors, qrName: "" });
-                  }
-                }}
+                onChange={(e) =>
+                  setQrForm({ ...qrForm, qrName: e.target.value })
+                }
                 error={formErrors.qrName}
-                required
               />
               <TextInput
-                label="UPI ID (Optional)"
-                placeholder="Enter UPI ID"
+                label="UPI ID"
+                placeholder="user@bank (Optional)"
                 value={qrForm.upiId}
                 onChange={(e) =>
                   setQrForm({ ...qrForm, upiId: e.target.value })
                 }
               />
               <FileInput
-                label="QR Code Image"
-                placeholder="Upload QR code"
-                accept="image/png,image/jpeg,image/jpg,image/webp"
+                label="QR Vision Data"
+                placeholder="Upload QR Image"
+                accept="image/*"
                 leftSection={<FaImage size={14} />}
                 onChange={handleQRImageChange}
                 error={formErrors.qrImage}
-                required
               />
               {qrForm.qrPreview && (
-                <Center>
-                  <Image
-                    src={qrForm.qrPreview}
-                    alt="QR Preview"
-                    fit="contain"
-                    width={200}
-                    height={200}
-                    radius="md"
-                  />
-                </Center>
+                <Image
+                  src={qrForm.qrPreview}
+                  fit="contain"
+                  height={160}
+                  radius="md"
+                  mt="sm"
+                />
               )}
-              <Alert color="2d1b4e" icon={<FaInfoCircle />}>
-                <Text size="xs">
-                  Upload a clear image of your payment QR code. This will be shown to admin for payment processing.
-                </Text>
-              </Alert>
               <Button
-                color="#2d1b4e"
                 fullWidth
                 onClick={handleAddQRCode}
                 loading={addQRMutation.isPending}
                 mt="md"
+                color="#0f172a"
+                radius="md"
                 disabled={!qrForm.qrImage}
               >
-                Add QR Code
+                Authorize QR Endpoint
               </Button>
-            </Flex>
+            </Stack>
           </Tabs.Panel>
         </Tabs>
       </Modal>

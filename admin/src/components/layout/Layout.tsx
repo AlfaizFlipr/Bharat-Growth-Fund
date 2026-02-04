@@ -4,7 +4,6 @@ import { AppShell } from "@mantine/core";
 import { Outlet } from "react-router-dom";
 
 import { useState } from "react";
-import { COLORS } from "../../assets/colors";
 import Header from "../header/Header";
 import Sidebar from "../sidebar/Sidebar";
 
@@ -14,18 +13,17 @@ const Layout = () => {
   return (
     <AppShell
       layout="alt"
-      header={{ height: 60 }}
+      header={{ height: 64 }}
       navbar={{
-        width: !sidebar ? "206px" : "60px",
+        width: !sidebar ? 230 : 70,
         breakpoint: "xs",
       }}
-      padding="md"
-      styles={{ navbar: { transition: "all .5s" } }}
+      padding="0"
     >
-      <AppShell.Header>
+      <AppShell.Header withBorder={false} bg="transparent">
         <Header />
       </AppShell.Header>
-      <AppShell.Navbar bg={COLORS.primary}>
+      <AppShell.Navbar withBorder={false}>
         <Sidebar hidden={sidebar} toggleSidebar={() => setSidebar((e) => !e)} />
       </AppShell.Navbar>
       <AppShell.Main pt={60} pr={0} pb={0} ml={10}>

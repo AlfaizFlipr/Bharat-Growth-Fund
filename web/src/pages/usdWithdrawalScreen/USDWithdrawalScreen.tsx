@@ -1,837 +1,613 @@
-import React, { useState } from "react";
-import {
-  Text,
-  Button,
-  Modal,
-  Card,
-  Badge,
-  Loader,
-  Group,
-  Divider,
-  Alert,
-  Center,
-  Tabs,
-  NumberInput,
-  Stack,
-  Paper,
-  Title,
-  ThemeIcon,
-  Pagination,
-  TextInput,
-  Select,
-  SegmentedControl,
-} from "@mantine/core";
-import {
-  useUSDWalletInfo,
-  useStripeConnectStatus,
-  useUSDWithdrawalHistory,
-  useUSDTransactionHistory,
-  useCreateStripeConnectAccount,
-  useWithdrawalMethods,
-  useSaveBitgetWallet,
-  useCreateUSDWithdrawalWithMethod,
-} from "../../hooks/query/useUSDWithdrawal.query";
-import classes from "./USDWithdrawalScreen.module.scss";
-import {
-  FaDollarSign,
-  FaWallet,
-  FaStripe,
-  FaCheckCircle,
-  FaClock,
-  FaTimesCircle,
-  FaExchangeAlt,
-  FaHistory,
-  FaInfoCircle,
-  FaBan,
-  FaPlus,
-  FaMinus,
-} from "react-icons/fa";
-import { RiExchangeFundsLine } from "react-icons/ri";
-import { notifications } from "@mantine/notifications";
+  import React, { useState } from "react";
+  import {
+    Text,
+    Button,
+    Modal,
+    Card,
+    Badge,
+    Loader,
+    Group,
+    Divider,
+    Alert,
+    Center,
+    Tabs,
+    NumberInput,
+    Stack,
+    Paper,
+    Title,
+    ThemeIcon,
+    Pagination,
+    TextInput,
+    Select,
+    ActionIcon,
+    Tooltip,
+  } from "@mantine/core";
+  import {
+    useUSDWalletInfo,
+    useStripeConnectStatus,
+    useUSDWithdrawalHistory,
+    useUSDTransactionHistory,
+    useWithdrawalMethods,
+    useSaveBitgetWallet,
+    useCreateUSDWithdrawalWithMethod,
+  } from "../../hooks/query/useUSDWithdrawal.query";
+  import {
+    useCheckWithdrawalAvailability,
+    useWithdrawalSchedule,
+  } from "../../hooks/query/useWithdrawal.query";
+  import classes from "./USDWithdrawalScreen.module.scss";
+  import {
+    FaDollarSign,
+    FaWallet,
+    FaClock,
+    FaExchangeAlt,
+    FaHistory,
+    FaInfoCircle,
+    FaBan,
+    FaPlus,
+    FaMinus,
+    FaRegQuestionCircle,
+    FaCalendarAlt,
+  } from "react-icons/fa";
+  import { RiExchangeFundsLine } from "react-icons/ri";
+  import { notifications } from "@mantine/notifications";
 
-const USDWithdrawalScreen: React.FC = () => {
-  const [withdrawalModal, setWithdrawalModal] = useState(false);
-  const [bitgetWalletModal, setBitgetWalletModal] = useState(false);
-  const [withdrawAmount, setWithdrawAmount] = useState<number | "">(0);
-  const [historyPage, setHistoryPage] = useState(1);
-  const [transactionPage, setTransactionPage] = useState(1);
-  const [bitgetAddress, setBitgetAddress] = useState("");
-  const [bitgetNetwork, setBitgetNetwork] = useState("trc20");
-  const [selectedMethod, setSelectedMethod] = useState<string>("bitget");
+  const USDWithdrawalScreen: React.FC = () => {
+    const [withdrawalModal, setWithdrawalModal] = useState(false);
+    const [bitgetWalletModal, setBitgetWalletModal] = useState(false);
+    const [withdrawAmount, setWithdrawAmount] = useState<number | "">(0);
+    const [historyPage, setHistoryPage] = useState(1);
+    const [transactionPage, setTransactionPage] = useState(1);
+    const [bitgetAddress, setBitgetAddress] = useState("");
+    const [bitgetNetwork, setBitgetNetwork] = useState("trc20");
+    const [selectedMethod] = useState<string>("bitget");
 
-  // Fetch data
-  const { data: walletData, isLoading: walletLoading } = useUSDWalletInfo();
-  const { data: connectStatus, isLoading: connectLoading } = useStripeConnectStatus();
-  const { data: withdrawalHistory, isLoading: historyLoading } = useUSDWithdrawalHistory(historyPage, 10);
-  const { data: transactionHistory, isLoading: transactionLoading } = useUSDTransactionHistory(transactionPage, 10);
-  const { data: methodsData } = useWithdrawalMethods();
+    
+    const { data: walletData, isLoading: walletLoading } = useUSDWalletInfo();
+    const { data: connectStatus, isLoading: connectLoading } = useStripeConnectStatus();
+    const { data: withdrawalHistory, isLoading: historyLoading } = useUSDWithdrawalHistory(historyPage, 10);
+    const { data: transactionHistory, isLoading: transactionLoading } = useUSDTransactionHistory(transactionPage, 10);
+    const { data: methodsData } = useWithdrawalMethods();
+    const { data: availabilityData } = useCheckWithdrawalAvailability();
+    useWithdrawalSchedule();
 
-  // Mutations
-  const createConnectMutation = useCreateStripeConnectAccount();
-  const createWithdrawalMutation = useCreateUSDWithdrawalWithMethod();
-  const saveBitgetWalletMutation = useSaveBitgetWallet();
+    const createWithdrawalMutation = useCreateUSDWithdrawalWithMethod();
+    const saveBitgetWalletMutation = useSaveBitgetWallet();
 
-  const predefinedAmounts = [1, 10, 100, 500, 1000, 5000];
+    const predefinedAmounts = [1, 10, 100, 500, 1000, 5000];
 
-  // Bitget minimum withdrawal amounts per network (from Bitget API - all networks require 10 USDT)
-  const bitgetMinimums: Record<string, number> = {
-    'trc20': 10,        // TRC20 minimum 10 USDT (fee: 1.5 USDT)
-    'bep20': 10,        // BEP20 minimum 10 USDT (fee: 0.15 USDT)
-    'erc20': 10,        // ERC20 minimum 10 USDT (fee: 1.6 USDT)
-    'polygon': 10,      // Polygon minimum 10 USDT (fee: 0.2 USDT)
-    'arbitrumone': 10,  // Arbitrum minimum 10 USDT (fee: 0.15 USDT)
-    'arbitrum': 10,     // Arbitrum alias
-    'optimism': 10,     // Optimism minimum 10 USDT (fee: 0.15 USDT)
-    'sol': 10,          // Solana minimum 10 USDT (fee: 1 USDT)
-    'ton': 10,          // TON minimum 10 USDT (fee: 0.15 USDT)
-    'aptos': 10,        // Aptos minimum 10 USDT (fee: 0.03 USDT)
-    'avaxc-chain': 10,  // AVAX minimum 10 USDT (fee: 0.11 USDT)
-    'morph': 10,        // Morph minimum 10 USDT (fee: 0.1 USDT)
-  };
+    const bitgetMinimums: Record<string, number> = {
+      'trc20': 10,
+      'bep20': 10,
+      'erc20': 10,
+      'polygon': 10,
+      'arbitrumone': 10,
+      'arbitrum': 10,
+      'optimism': 10,
+      'sol': 10,
+      'ton': 10,
+      'aptos': 10,
+      'avaxc-chain': 10,
+      'morph': 10,
+    };
 
-  const wallet = walletData?.wallet;
-  const exchangeRate = walletData?.currentExchangeRate || 83;
-  const isOnboarded = connectStatus?.isOnboarded || false;
-  const connectAccount = connectStatus?.stripeAccountId;
+    const wallet = walletData?.wallet;
+    const exchangeRate = walletData?.currentExchangeRate || 83;
+    const isOnboarded = connectStatus?.isOnboarded || false;
 
-  // Bitget settings
-  const bitgetEnabled = methodsData?.methods?.bitget?.enabled || true;
-  const stripeEnabled = methodsData?.methods?.stripe?.enabled || false;
-  const bitgetSettings = methodsData?.methods?.bitget || {};
+    
+    const bitgetEnabled = methodsData?.methods?.bitget?.enabled !== false;
+    const bitgetSettings = methodsData?.methods?.bitget || {};
 
-  // Check if user has saved Bitget wallet
-  const hasBitgetWallet = wallet?.bitgetWalletAddress && wallet?.bitgetVerified;
+    
+    const hasBitgetWallet = wallet?.bitgetWalletAddress && wallet?.bitgetVerified;
 
-  const handleStripeOnboarding = () => {
-    const returnUrl = window.location.origin + "/usd-withdrawal";
-    createConnectMutation.mutate(returnUrl);
-  };
+    const canWithdraw = availabilityData?.canWithdraw;
+    const availabilityReason = availabilityData?.reason;
 
-  const handleSaveBitgetWallet = () => {
-    if (!bitgetAddress.trim()) {
-      notifications.show({
-        title: "Error",
-        message: "Please enter a valid wallet address",
-        color: "red",
-      });
-      return;
-    }
-
-    saveBitgetWalletMutation.mutate(
-      { bitgetWalletAddress: bitgetAddress, bitgetNetwork },
-      {
-        onSuccess: () => {
-          setBitgetWalletModal(false);
-          setBitgetAddress("");
-        },
-      }
-    );
-  };
-
-  const handleWithdraw = () => {
-    if (!withdrawAmount || withdrawAmount <= 0) {
-      notifications.show({
-        title: "Error",
-        message: "Please enter a valid amount",
-        color: "red",
-      });
-      return;
-    }
-
-    if (!wallet || withdrawAmount > wallet.balanceINR) {
-      notifications.show({
-        title: "Error",
-        message: "Insufficient balance",
-        color: "red",
-      });
-      return;
-    }
-
-    // Check if the selected method is available
-    if (selectedMethod === "bitget" && !hasBitgetWallet) {
-      notifications.show({
-        title: "Error",
-        message: "Please add your Bitget wallet address first",
-        color: "red",
-      });
-      return;
-    }
-
-    if (selectedMethod === "stripe" && !isOnboarded) {
-      notifications.show({
-        title: "Error",
-        message: "Please complete Stripe verification first",
-        color: "red",
-      });
-      return;
-    }
-
-    // Check Bitget minimum withdrawal amount
-    if (selectedMethod === "bitget") {
-      const network = wallet?.bitgetNetwork || 'trc20';
-      const minUSD = bitgetMinimums[network.toLowerCase()] || 10;
-      const minINR = Math.ceil(minUSD * exchangeRate * 1.01); // Add 1% buffer for fees
-      const amountUSD = Number(withdrawAmount) / exchangeRate;
-
-      if (amountUSD < minUSD) {
+    const handleSaveBitgetWallet = () => {
+      if (!bitgetAddress.trim()) {
         notifications.show({
-          title: "Minimum Not Met",
-          message: `Bitget ${network.toUpperCase()} requires minimum $${minUSD} USDT. Please withdraw at least ₹${minINR.toLocaleString()} (current: $${amountUSD.toFixed(2)})`,
+          title: "Error",
+          message: "Please enter a valid wallet address",
           color: "red",
         });
         return;
       }
-    }
 
-    createWithdrawalMutation.mutate(
-      { amountINR: Number(withdrawAmount), withdrawalMethod: selectedMethod as 'stripe' | 'bitget' },
-      {
-        onSuccess: () => {
-          setWithdrawalModal(false);
-          setWithdrawAmount(0);
-        },
-      }
-    );
-  };
-
-  const getStatusBadge = (status: string) => {
-    const statusConfig: Record<string, { color: string; icon: React.ReactNode }> = {
-      pending: { color: "yellow", icon: <FaClock /> },
-      processing: { color: "blue", icon: <FaClock /> },
-      completed: { color: "green", icon: <FaCheckCircle /> },
-      rejected: { color: "red", icon: <FaTimesCircle /> },
-      failed: { color: "red", icon: <FaBan /> },
+      saveBitgetWalletMutation.mutate(
+        { bitgetWalletAddress: bitgetAddress, bitgetNetwork },
+        {
+          onSuccess: () => {
+            setBitgetWalletModal(false);
+            setBitgetAddress("");
+          },
+        }
+      );
     };
 
-    const config = statusConfig[status] || { color: "gray", icon: null };
-    return (
-      <Badge color={config.color} leftSection={config.icon} size="sm">
-        {status.toUpperCase()}
-      </Badge>
-    );
-  };
+    const handleWithdraw = () => {
+      if (!canWithdraw) {
+        notifications.show({
+          title: "Withdrawals Restricted",
+          message: availabilityReason || "Withdrawals are currently not available.",
+          color: "orange",
+        });
+        return;
+      }
 
-  const getMethodBadge = (method: string) => {
-    if (method === "bitget") {
+      if (!withdrawAmount || withdrawAmount <= 0) {
+        notifications.show({
+          title: "Error",
+          message: "Please enter a valid amount",
+          color: "red",
+        });
+        return;
+      }
+
+      if (!wallet || withdrawAmount > wallet.balanceINR) {
+        notifications.show({
+          title: "Error",
+          message: "Insufficient balance",
+          color: "red",
+        });
+        return;
+      }
+
+      if (selectedMethod === "bitget" && !hasBitgetWallet) {
+        notifications.show({
+          title: "Error",
+          message: "Please add your Bitget wallet address first",
+          color: "red",
+        });
+        return;
+      }
+
+      if (selectedMethod === "stripe" && !isOnboarded) {
+        notifications.show({
+          title: "Error",
+          message: "Please complete Stripe verification first",
+          color: "red",
+        });
+        return;
+      }
+
+      if (selectedMethod === "bitget") {
+        const network = wallet?.bitgetNetwork || 'trc20';
+        const minUSD = bitgetMinimums[network.toLowerCase()] || 10;
+        const amountUSD = Number(withdrawAmount) / exchangeRate;
+
+        if (amountUSD < minUSD) {
+          notifications.show({
+            title: "Minimum Not Met",
+            message: `Bitget requires minimum $${minUSD} USDT. Current: $${amountUSD.toFixed(2)}`,
+            color: "red",
+          });
+          return;
+        }
+      }
+
+      createWithdrawalMutation.mutate(
+        { amountINR: Number(withdrawAmount), withdrawalMethod: selectedMethod as 'stripe' | 'bitget' },
+        {
+          onSuccess: () => {
+            setWithdrawalModal(false);
+            setWithdrawAmount(0);
+          },
+        }
+      );
+    };
+
+    const getStatusTag = (status: string) => {
+      const className = classes[`status${status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()}`] || '';
+      return <span className={`${classes.statusTag} ${className}`}>{status}</span>;
+    };
+
+    const formatDate = (dateStr: string) => {
+      return new Date(dateStr).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    };
+
+    if (walletLoading || connectLoading) {
       return (
-        <Badge color="teal" leftSection={<RiExchangeFundsLine size={10} />} size="xs">
-          Bitget
-        </Badge>
+        <div className={classes.loadingContainer}>
+          <Loader size="lg" color="indigo" />
+        </div>
       );
     }
-    return (
-      <Badge color="violet" leftSection={<FaStripe size={10} />} size="xs">
-        Stripe
-      </Badge>
-    );
-  };
 
-  const getTransactionIcon = (type: string) => {
-    switch (type) {
-      case "admin_fund":
-      case "credit":
-        return <FaPlus color="#40c057" />;
-      case "withdrawal":
-      case "debit":
-        return <FaMinus color="#fa5252" />;
-      case "refund":
-        return <FaExchangeAlt color="#fab005" />;
-      default:
-        return <FaDollarSign />;
-    }
-  };
-
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  if (walletLoading || connectLoading) {
-    return (
-      <div className={classes.loadingContainer}>
-        <Loader size="lg" />
-      </div>
-    );
-  }
-
-  // Check if user is USD enabled
-  if (!wallet && !walletLoading) {
-    return (
-      <div className={classes.container}>
-        <Title order={2} className={classes.title}>
-          USD Withdrawals
-        </Title>
-
-        <Card className={classes.card} p="xl" withBorder>
-          <Center>
-            <Stack align="center" gap="md">
-              <ThemeIcon size={80} radius="xl" color="gray" variant="light">
-                <FaBan size={40} />
-              </ThemeIcon>
-              <Text size="lg" fw={600} ta="center">
-                USD Withdrawals Not Available
-              </Text>
-              <Text size="sm" c="dimmed" ta="center" maw={400}>
-                Your account is not enabled for USD withdrawals. Please contact support if you believe this is an error.
-              </Text>
-            </Stack>
-          </Center>
-        </Card>
-      </div>
-    );
-  }
-
+if (!wallet && !walletLoading) {
   return (
     <div className={classes.container}>
       <Title order={2} className={classes.title}>
-        USD Withdrawals
+        Institutional Treasury
       </Title>
-
-      {/* Wallet Balance Card */}
-      <div className={classes.walletCard}>
-        <div className={classes.walletHeader}>
-          <Text className={classes.walletTitle}>
-            <FaWallet style={{ marginRight: 8 }} />
-            USD Wallet Balance
-          </Text>
-          <Group gap="xs">
-            {bitgetEnabled && hasBitgetWallet && (
-              <Badge color="teal" variant="light" size="sm" leftSection={<RiExchangeFundsLine size={10} />}>
-                Bitget Ready
-              </Badge>
-            )}
-            {stripeEnabled && isOnboarded && (
-              <Badge color="green" variant="light" size="sm" leftSection={<FaStripe size={10} />}>
-                Stripe Connected
-              </Badge>
-            )}
-          </Group>
-        </div>
-
-        <div className={classes.balanceSection}>
-          <div className={classes.balanceItem}>
-            <Text className={classes.balanceLabel}>Balance (INR)</Text>
-            <Text className={`${classes.balanceValue} ${classes.inrBalance}`}>
-              ₹{wallet?.balanceINR?.toLocaleString() || 0}
-            </Text>
-          </div>
-          <div className={classes.balanceItem}>
-            <Text className={classes.balanceLabel}>Balance (USD)</Text>
-            <Text className={`${classes.balanceValue} ${classes.usdBalance}`}>
-              ${wallet?.balanceUSD?.toFixed(2) || "0.00"}
-            </Text>
-          </div>
-        </div>
-
-        <Text className={classes.exchangeRate}>
-          <FaExchangeAlt style={{ marginRight: 6 }} />
-          Current Exchange Rate: 1 USD = ₹{exchangeRate}
-        </Text>
-      </div>
-
-      {/* Bitget Wallet Setup - Show if Bitget is enabled and no wallet saved */}
-      {bitgetEnabled && !hasBitgetWallet && (
-        <div className={classes.onboardingCard} style={{ background: "linear-gradient(135deg, #00D4AA 0%, #00B894 100%)" }}>
-          <RiExchangeFundsLine size={50} style={{ marginBottom: 16, color: "#FFFFFF" }} />
-          <Text className={classes.onboardingTitle} style={{ color: "#FFFFFF" }}>
-            Add Your Bitget Wallet
-          </Text>
-          <Text className={classes.onboardingDesc} style={{ color: "#FFFFFF" }}>
-            Add your {bitgetSettings?.network || "TRC20"} wallet address to receive {bitgetSettings?.currency || "USDT"} withdrawals directly to your crypto wallet.
-          </Text>
-          <Button
-            size="md"
-            className={classes.stripeBtn}
-            style={{ background: "#FFFFFF", color: "#00D4AA" }}
-            onClick={() => setBitgetWalletModal(true)}
-            leftSection={<RiExchangeFundsLine />}
+      <Card
+        className={classes.card}
+        p="xl"
+        withBorder
+        radius="24px"
+        style={{
+          textAlign: "center",
+          background: "linear-gradient(145deg, #f9fafb, #ffffff)",
+        }}
+      >
+        <Stack align="center" gap="md">
+          <ThemeIcon
+            size={80}
+            radius="xl"
+            color="gray"
+            variant="light"
+            style={{
+              backgroundColor: "#f3f4f6",
+              border: "1px dashed #d1d5db",
+            }}
           >
-            Add Wallet Address
-          </Button>
-        </div>
-      )}
+            <FaBan size={40} />
+          </ThemeIcon>
 
-      {/* Show saved Bitget wallet */}
-      {bitgetEnabled && hasBitgetWallet && (
-        <Card className={classes.statusCard} withBorder>
-          <div className={classes.statusItem}>
-            <div className={`${classes.statusIcon}`} style={{ background: "#00D4AA20" }}>
-              <RiExchangeFundsLine color="#00D4AA" />
-            </div>
-            <div style={{ flex: 1 }}>
-              <Text size="sm" fw={600}>Bitget Wallet Connected</Text>
-              <Text size="xs" c="dimmed" style={{ fontFamily: "monospace", wordBreak: "break-all" }}>
-                {wallet?.bitgetWalletAddress?.slice(0, 10)}...{wallet?.bitgetWalletAddress?.slice(-10)}
+          <Text size="xl" fw={700} ta="center" c="dark">
+            USD Access Unavailable
+          </Text>
+
+          <Text size="sm" c="dimmed" ta="center" maw={420}>
+            Your institutional account has not been onboarded for USD Treasury operations yet.
+            Please contact your manager or the finance administrator to enable USD Liquidations.
+          </Text>
+
+          <Button
+            mt="md"
+            radius="md"
+            color="indigo"
+            variant="light"
+            onClick={() => window.open("mailto:support@yourcompany.com", "_blank")}
+          >
+            Contact Administrator
+          </Button>
+        </Stack>
+      </Card>
+    </div>
+  );
+}
+
+    return (
+      <div className={classes.container}>
+        <Group justify="space-between" align="center" mb="xl">
+          <Title order={2} className={classes.title}>
+            Institutional Treasury
+          </Title>
+          <Tooltip label="Withdrawal Schedule">
+            <ActionIcon variant="light" color="indigo" size="lg" radius="md">
+              <FaCalendarAlt />
+            </ActionIcon>
+          </Tooltip>
+        </Group>
+
+        {}
+        <div className={classes.walletCard}>
+          <div className={classes.walletHeader}>
+            <Text className={classes.walletTitle}>
+              Global Liquidity Node
+            </Text>
+            <Group gap="xs">
+              {bitgetEnabled && hasBitgetWallet && (
+                <Badge color="teal" variant="filled" size="sm">
+                  Bitget Node Active
+                </Badge>
+              )}
+            </Group>
+          </div>
+
+          <div className={classes.balanceSection}>
+            <div className={classes.balanceItem}>
+              <Text className={classes.balanceLabel}>
+                <FaWallet size={12} /> Local Holding (INR)
               </Text>
-              <Badge color="teal" size="xs" mt="xs">
-                {wallet?.bitgetNetwork || "TRC20"} Network
-              </Badge>
+              <Text className={`${classes.balanceValue} ${classes.inrBalance}`}>
+                ₹{wallet?.balanceINR?.toLocaleString() || 0}
+              </Text>
             </div>
-            <Button size="xs" variant="light" color="teal" onClick={() => setBitgetWalletModal(true)}>
-              Update
+            <div className={classes.balanceItem}>
+              <Text className={classes.balanceLabel}>
+                <FaDollarSign size={12} /> USD Appraisal
+              </Text>
+              <Text className={`${classes.balanceValue} ${classes.usdBalance}`}>
+                ${wallet?.balanceUSD?.toFixed(2) || "0.00"}
+              </Text>
+            </div>
+          </div>
+
+          <Text className={classes.exchangeRate}>
+            Liquidity Provider Rate: 1.00 USD @ ₹{exchangeRate}
+          </Text>
+        </div>
+
+        {}
+        {!canWithdraw && (
+          <div className={classes.availabilityAlert}>
+            <FaInfoCircle className={classes.alertIcon} />
+            <div className={classes.alertContent}>
+              <Text className={classes.alertTitle}>Treasury Liquidation Closed</Text>
+              <Text className={classes.alertMessage}>
+                {availabilityReason || "Withdrawals are currently processed during business hours only."}
+                {" "}Check the schedule for next availability.
+              </Text>
+            </div>
+          </div>
+        )}
+
+        {}
+        {bitgetEnabled && hasBitgetWallet && (
+          <Card className={classes.card} p="lg" mb="xl">
+            <Group justify="space-between">
+              <Group>
+                <div className={classes.methodIcon} style={{ background: '#ecfdf5', color: '#059669' }}>
+                  <RiExchangeFundsLine size={24} />
+                </div>
+                <div>
+                  <Text fw={700} size="sm">Bitget Node Connected</Text>
+                  <Text size="xs" c="dimmed" style={{ fontFamily: 'monospace' }}>
+                    {wallet.bitgetWalletAddress.slice(0, 12)}...{wallet.bitgetWalletAddress.slice(-12)}
+                  </Text>
+                </div>
+              </Group>
+              <Button variant="subtle" color="gray" size="xs" onClick={() => setBitgetWalletModal(true)}>
+                Modify Node
+              </Button>
+            </Group>
+          </Card>
+        )}
+        {bitgetEnabled && !hasBitgetWallet && (
+          <div className={classes.onboardingCard}>
+            <div className={classes.methodIcon} style={{ background: '#f5f3ff', color: '#6366f1', margin: '0 auto 1.5rem', width: '64px', height: '64px' }}>
+              <RiExchangeFundsLine size={32} />
+            </div>
+            <Text className={classes.onboardingTitle}>Setup Crypto Liquidation</Text>
+            <Text className={classes.onboardingDesc}>
+              Connect your {bitgetSettings?.network || "TRC20"} wallet to receive instant {bitgetSettings?.currency} settlements.
+            </Text>
+            <Button
+              className={classes.stripeBtn}
+              onClick={() => setBitgetWalletModal(true)}
+              leftSection={<PlusIcon />}
+            >
+              Add Wallet Node
             </Button>
           </div>
-        </Card>
-      )}
+        )}
 
-      {/* Stripe Onboarding - Show if Stripe is enabled */}
-      {stripeEnabled && !isOnboarded && (
-        <div className={classes.onboardingCard}>
-          <FaStripe size={50} style={{ marginBottom: 16 }} />
-          <Text className={classes.onboardingTitle}>
-            Connect Your Stripe Account
-          </Text>
-          <Text className={classes.onboardingDesc}>
-            To receive USD withdrawals, you need to complete Stripe verification.
-            This ensures secure and compliant international payouts.
-          </Text>
-          <Button
-            className={classes.stripeBtn}
-            onClick={handleStripeOnboarding}
-            loading={createConnectMutation.isPending}
-            color="#2d1b4e"
-            leftSection={<FaStripe />}
-          >
-            {connectAccount ? "Complete Verification" : "Connect with Stripe"}
-          </Button>
-        </div>
-      )}
-
-      {/* Stripe Status */}
-      {stripeEnabled && connectAccount && !isOnboarded && (
-        <Card className={classes.statusCard} withBorder>
-          <div className={classes.statusItem}>
-            <div className={`${classes.statusIcon} ${classes.statusPending}`}>
-              <FaClock />
-            </div>
+        {}
+        <Card className={classes.card} p="xl" mb="xl">
+          <Stack gap="xl">
             <div>
-              <Text size="sm" fw={600}>Verification Pending</Text>
-              <Text size="xs" c="dimmed">
-                Please complete the Stripe verification process
-              </Text>
+              <Text fw={700} size="lg" mb="xs">Market Liquidation</Text>
+              <Text size="sm" c="dimmed">Select liquidation amount to initiate global settlement.</Text>
             </div>
-          </div>
+
+            <div className={classes.amountGrid}>
+              {predefinedAmounts.map((amount) => {
+                const isDisabled = amount > (wallet?.balanceINR || 0);
+                const isSelected = withdrawAmount === amount;
+                return (
+                  <button
+                    key={amount}
+                    type="button"
+                    disabled={isDisabled}
+                    className={`${classes.amountCard} ${isSelected ? classes.amountSelected : ""} ${isDisabled ? classes.amountDisabled : ""}`}
+                    onClick={() => setWithdrawAmount(amount)}
+                  >
+                    <Text size="sm" fw={700}>₹{amount.toLocaleString()}</Text>
+                    <Text size="xs" style={{ opacity: isSelected ? 0.8 : 0.6 }}>
+                      ~${(amount / exchangeRate).toFixed(1)}
+                    </Text>
+                  </button>
+                );
+              })}
+            </div>
+
+            <NumberInput
+              label="Custom Liquidation Amount (INR)"
+              placeholder="Min liquidation: ₹1.00"
+              value={withdrawAmount}
+              onChange={(val) => setWithdrawAmount(val as number)}
+              size="lg"
+              radius="md"
+              prefix="₹ "
+              max={wallet?.balanceINR || 0}
+              error={withdrawAmount && Number(withdrawAmount) > (wallet?.balanceINR || 0) ? "Insufficient Treasury Balance" : null}
+            />
+
+            <Button
+              className={classes.withdrawBtn}
+              onClick={() => setWithdrawalModal(true)}
+              disabled={!withdrawAmount || Number(withdrawAmount) < 1 || !canWithdraw}
+              leftSection={<FaExchangeAlt />}
+              fullWidth
+            >
+              Initiate Liquidation
+            </Button>
+          </Stack>
         </Card>
-      )}
 
-      {/* Withdrawal Action */}
-      {(hasBitgetWallet || isOnboarded) && (
-        <Card className={classes.card} p="md" withBorder>
-          <Text size="lg" fw={600} mb="md">
-            Create Withdrawal
-          </Text>
-          <Alert icon={<FaInfoCircle />} color="2d1b4e" variant="light" mb="md">
-            Minimum withdrawal: ₹1 | Maximum: ₹500,000 per request
-            {bitgetEnabled && hasBitgetWallet && (
-              <Text size="xs" mt="xs">
-                Bitget withdrawals are processed in {bitgetSettings?.currency || "USDT"} on {bitgetSettings?.network || "TRC20"} network
-              </Text>
-            )}
-          </Alert>
-          <Button
-            size="lg"
-            fullWidth
-            className={classes.withdrawBtn}
-            onClick={() => setWithdrawalModal(true)}
-            disabled={!wallet?.balanceINR || wallet.balanceINR < 1}
-            leftSection={bitgetEnabled ? <RiExchangeFundsLine /> : <FaDollarSign />}
-          >
-            Withdraw to {bitgetEnabled && hasBitgetWallet ? "Crypto Wallet" : "USD"}
-          </Button>
-        </Card>
-      )}
+        {}
+        <Card className={classes.card} p={0}>
+          <Tabs defaultValue="history" variant="outline" styles={{
+            tab: { padding: '1.25rem 1.5rem', fontWeight: 600 },
+            panel: { padding: '0' }
+          }}>
+            <Tabs.List>
+              <Tabs.Tab value="history" leftSection={<FaHistory />}>Activity Logs</Tabs.Tab>
+              <Tabs.Tab value="transactions" leftSection={<FaWallet />}>Ledger Details</Tabs.Tab>
+            </Tabs.List>
 
-      {/* Tabs for History */}
-      <div className={classes.tabsContainer}>
-        <Tabs defaultValue="withdrawals" variant="pills" color="#1a4731">
-          <Tabs.List grow mb="md">
-            <Tabs.Tab value="withdrawals" leftSection={<FaDollarSign size={14} />}>
-              Withdrawals
-            </Tabs.Tab>
-            <Tabs.Tab value="transactions" leftSection={<FaHistory size={14} />}>
-              Transactions
-            </Tabs.Tab>
-          </Tabs.List>
-
-          <Tabs.Panel value="withdrawals">
-            <Card className={classes.card} withBorder>
-              {historyLoading ? (
-                <Center p="xl">
-                  <Loader />
-                </Center>
-              ) : withdrawalHistory?.withdrawals?.length > 0 ? (
-                <>
-                  {withdrawalHistory.withdrawals.map((item: any) => (
-                    <div key={item._id} className={classes.historyItem}>
-                      <div className={classes.historyHeader}>
-                        <Text className={classes.historyAmount}>
-                          ₹{item.amountINR?.toLocaleString()} → ${item.amountUSD?.toFixed(2)}
-                        </Text>
-                        <Group gap="xs">
-                          {getMethodBadge(item.withdrawalMethod || "stripe")}
-                          {getStatusBadge(item.status)}
+            <Tabs.Panel value="history">
+              {historyLoading && <Center p="xl"><Loader variant="dots" /></Center>}
+              {!historyLoading && withdrawalHistory?.withdrawals?.length > 0 && (
+                  <div style={{ maxHeight: '500px', overflowY: 'auto' }}>
+                    {withdrawalHistory.withdrawals.map((item: { _id: string; amountINR: number; amountUSD: number; status: string; withdrawalMethod: string; createdAt: string; exchangeRate: number }) => (
+                      <div key={item._id} className={classes.historyItem}>
+                        <Group justify="space-between" mb="xs">
+                          <Text fw={700}>₹{item.amountINR.toLocaleString()} → ${item.amountUSD.toFixed(2)}</Text>
+                          {getStatusTag(item.status)}
+                        </Group>
+                        <Group justify="space-between" align="flex-end">
+                          <Group gap="md">
+                            <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                              <FaRegQuestionCircle style={{ marginRight: 4 }} />
+                              {item.withdrawalMethod === 'bitget' ? 'Blockchain Settlement' : 'Bank Wire'}
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                              <FaClock style={{ marginRight: 4 }} />
+                              {formatDate(item.createdAt)}
+                            </div>
+                          </Group>
+                          <Text size="xs" c="dimmed">Rate: ₹{item.exchangeRate}</Text>
                         </Group>
                       </div>
-                      <div className={classes.historyDetails}>
-                        <Text size="xs" c="dimmed">
-                          Rate: ₹{item.exchangeRate}
-                        </Text>
-                        <Text size="xs" c="dimmed">
-                          {formatDate(item.createdAt)}
-                        </Text>
-                      </div>
-                      {item.withdrawalMethod === "bitget" && item.bitgetTxHash && (
-                        <Text size="xs" c="dimmed" mt="xs" style={{ fontFamily: "monospace" }}>
-                          TX: {item.bitgetTxHash.slice(0, 20)}...
-                        </Text>
-                      )}
-                      {item.rejectionReason && (
-                        <Text size="xs" c="red" mt="xs">
-                          Reason: {item.rejectionReason}
-                        </Text>
-                      )}
-                    </div>
-                  ))}
-                  {withdrawalHistory.totalPages > 1 && (
-                    <Center mt="md">
-                      <Pagination
-                        value={historyPage}
-                        onChange={setHistoryPage}
-                        total={withdrawalHistory.totalPages}
-                        size="sm"
-                      />
-                    </Center>
-                  )}
-                </>
-              ) : (
-                <div className={classes.noDataCard}>
-                  <FaDollarSign className={classes.noDataIcon} />
-                  <Text size="sm">No withdrawal history yet</Text>
-                </div>
+                    ))}
+                    {withdrawalHistory.totalPages > 1 && (
+                      <Center py="md">
+                        <Pagination value={historyPage} onChange={setHistoryPage} total={withdrawalHistory.totalPages} radius="md" />
+                      </Center>
+                    )}
+                  </div>
               )}
-            </Card>
-          </Tabs.Panel>
+              {!historyLoading && (!withdrawalHistory?.withdrawals || withdrawalHistory.withdrawals.length === 0) && (
+                  <Center p="xl"><Stack align="center" gap="xs"><FaHistory size={32} color="#e2e8f0" /><Text c="dimmed" size="sm">No activity recorded</Text></Stack></Center>
+              )}
+            </Tabs.Panel>
 
-          <Tabs.Panel value="transactions">
-            <Card className={classes.card} withBorder>
-              {transactionLoading ? (
-                <Center p="xl">
-                  <Loader />
-                </Center>
-              ) : transactionHistory?.transactions?.length > 0 ? (
-                <>
-                  {transactionHistory.transactions.map((item: any) => (
-                    <div key={item._id} className={classes.historyItem}>
-                      <Group justify="space-between">
-                        <Group gap="xs">
-                          <ThemeIcon
-                            variant="light"
-                            color={item.type === "admin_fund" || item.type === "credit" ? "green" : item.type === "withdrawal" || item.type === "debit" ? "red" : "blue"}
-                            size="sm"
-                          >
-                            {getTransactionIcon(item.type)}
-                          </ThemeIcon>
-                          <div>
-                            <Text size="sm" fw={500} tt="capitalize">
-                              {item.type.replace("_", " ")}
+            <Tabs.Panel value="transactions">
+              {transactionLoading && <Center p="xl"><Loader variant="dots" /></Center>}
+              {!transactionLoading && transactionHistory?.transactions?.length > 0 && (
+                  <div style={{ maxHeight: '500px', overflowY: 'auto' }}>
+                    {transactionHistory.transactions.map((item: { _id: string; type: string; amountINR: number; amountUSD: number; createdAt: string }) => (
+                      <div key={item._id} className={classes.historyItem}>
+                        <Group justify="space-between">
+                          <Group>
+                            <ActionIcon variant="light" color={item.type.includes('credit') || item.type === 'admin_fund' ? 'green' : 'red'}>
+                              {item.type.includes('credit') || item.type === 'admin_fund' ? <FaPlus size={12} /> : <FaMinus size={12} />}
+                            </ActionIcon>
+                            <div>
+                              <Text fw={600} size="sm" tt="capitalize">{item.type.replace('_', ' ')}</Text>
+                              <Text size="xs" c="dimmed">{formatDate(item.createdAt)}</Text>
+                            </div>
+                          </Group>
+                          <div style={{ textAlign: 'right' }}>
+                            <Text fw={700} c={item.type.includes('credit') || item.type === 'admin_fund' ? 'green' : 'red'}>
+                              {item.type.includes('credit') || item.type === 'admin_fund' ? '+' : '-'}₹{Math.abs(item.amountINR).toLocaleString()}
                             </Text>
-                            <Text size="xs" c="dimmed">
-                              {formatDate(item.createdAt)}
-                            </Text>
+                            <Text size="xs" c="dimmed">${Math.abs(item.amountUSD).toFixed(2)}</Text>
                           </div>
                         </Group>
-                        <div style={{ textAlign: "right" }}>
-                          <Text
-                            size="sm"
-                            fw={600}
-                            c={item.type === "admin_fund" || item.type === "refund" || item.type === "credit" ? "green" : "red"}
-                          >
-                            {item.type === "admin_fund" || item.type === "refund" || item.type === "credit" ? "+" : "-"}
-                            ₹{Math.abs(item.amountINR)?.toLocaleString()}
-                          </Text>
-                          {item.amountUSD && (
-                            <Text size="xs" c="dimmed">
-                              ${Math.abs(item.amountUSD)?.toFixed(2)}
-                            </Text>
-                          )}
-                        </div>
-                      </Group>
-                      {item.description && (
-                        <Text size="xs" c="dimmed" mt="xs">
-                          {item.description}
-                        </Text>
-                      )}
-                    </div>
-                  ))}
-                  {transactionHistory.totalPages > 1 && (
-                    <Center mt="md">
-                      <Pagination
-                        value={transactionPage}
-                        onChange={setTransactionPage}
-                        total={transactionHistory.totalPages}
-                        size="sm"
-                      />
-                    </Center>
-                  )}
-                </>
-              ) : (
-                <div className={classes.noDataCard}>
-                  <FaHistory className={classes.noDataIcon} />
-                  <Text size="sm">No transactions yet</Text>
-                </div>
+                      </div>
+                    ))}
+                    {transactionHistory.totalPages > 1 && (
+                      <Center py="md">
+                        <Pagination value={transactionPage} onChange={setTransactionPage} total={transactionHistory.totalPages} radius="md" />
+                      </Center>
+                    )}
+                  </div>
               )}
-            </Card>
-          </Tabs.Panel>
-        </Tabs>
-      </div>
+              {!transactionLoading && (!transactionHistory?.transactions || transactionHistory.transactions.length === 0) && (
+                  <Center p="xl"><Stack align="center" gap="xs"><FaWallet size={32} color="#e2e8f0" /><Text c="dimmed" size="sm">No ledger entries</Text></Stack></Center>
+              )}
+            </Tabs.Panel>
+          </Tabs>
+        </Card>
 
-      {/* Withdrawal Modal */}
-      <Modal
-        opened={withdrawalModal}
-        onClose={() => setWithdrawalModal(false)}
-        title="Create USD Withdrawal"
-        centered
-        size="md"
-      >
-        <Stack gap="md">
-          {/* Method Selection - only show if both methods available */}
-          {bitgetEnabled && stripeEnabled && hasBitgetWallet && isOnboarded && (
-            <div>
-              <Text size="sm" fw={500} mb="xs">Withdrawal Method</Text>
-              <SegmentedControl
-                fullWidth
-                value={selectedMethod}
-                onChange={setSelectedMethod}
-                data={[
-                  {
-                    value: 'bitget',
-                    label: (
-                      <Group gap="xs" justify="center">
-                        <RiExchangeFundsLine size={16} />
-                        <span>Bitget (Crypto)</span>
-                      </Group>
-                    )
-                  },
-                  {
-                    value: 'stripe',
-                    label: (
-                      <Group gap="xs" justify="center">
-                        <FaStripe size={16} />
-                        <span>Stripe (Bank)</span>
-                      </Group>
-                    )
-                  },
-                ]}
-              />
-            </div>
-          )}
+        {}
+        <Modal
+          opened={withdrawalModal}
+          onClose={() => setWithdrawalModal(false)}
+          title="Institutional Liquidation Confirmation"
+          centered
+          radius="24px"
+          padding="xl"
+        >
+          <Stack gap="lg">
+            <Alert color="indigo" variant="light" radius="md">
+              Liquidation via <b>{(selectedMethod || 'Bitget').toUpperCase()}</b>.
+              Funds will be dispatched to your linked institutional node.
+            </Alert>
 
-          <Alert
-            icon={selectedMethod === 'bitget' ? <RiExchangeFundsLine /> : <FaInfoCircle />}
-            color={selectedMethod === 'bitget' ? "teal" : "blue"}
-            variant="light"
-          >
-            {selectedMethod === 'bitget' && bitgetEnabled ? (
-              <>
-                Your INR will be converted to {bitgetSettings?.currency || "USDT"} and sent to your wallet on {(wallet?.bitgetNetwork || bitgetSettings?.network || "trc20").toUpperCase()} network.
-                {wallet?.bitgetWalletAddress && (
-                  <Text size="xs" mt="xs" style={{ fontFamily: "monospace", wordBreak: "break-all" }}>
-                    To: {wallet.bitgetWalletAddress}
+            <Paper withBorder p="md" radius="md" bg="#f8fafc">
+              <Stack gap="xs">
+                <Group justify="space-between">
+                  <Text size="sm" c="dimmed">Liquidation Amount</Text>
+                  <Text fw={700}>₹{Number(withdrawAmount).toLocaleString()}</Text>
+                </Group>
+                <Group justify="space-between">
+                  <Text size="sm" c="dimmed">Provider Rate</Text>
+                  <Text fw={700}>₹{exchangeRate}</Text>
+                </Group>
+                <Divider my="xs" />
+                <Group justify="space-between">
+                  <Text fw={700}>Total Net Disbursement</Text>
+                  <Text fw={800} size="lg" c="indigo">
+                    ${(Number(withdrawAmount) / exchangeRate).toFixed(2)} USDT
                   </Text>
-                )}
-                <Text size="xs" mt="xs" fw={600} c="orange">
-                  ⚠️ Minimum: ${bitgetMinimums[(wallet?.bitgetNetwork || 'trc20').toLowerCase()] || 10} USDT
-                  (~₹{Math.ceil((bitgetMinimums[(wallet?.bitgetNetwork || 'trc20').toLowerCase()] || 10) * exchangeRate * 1.01).toLocaleString()})
-                </Text>
-              </>
-            ) : (
-              "Your INR will be converted to USD at the current exchange rate and sent to your Stripe account."
-            )}
-          </Alert>
-
-          <Paper withBorder p="md" radius="md">
-            <Group justify="space-between" mb="xs">
-              <Text size="sm" c="dimmed">Available Balance</Text>
-              <Text size="sm" fw={600}>₹{wallet?.balanceINR?.toLocaleString() || 0}</Text>
-            </Group>
-            <Group justify="space-between" mb="xs">
-              <Text size="sm" c="dimmed">Exchange Rate</Text>
-              <Text size="sm" fw={600}>1 USD = ₹{exchangeRate}</Text>
-            </Group>
-            {withdrawAmount && Number(withdrawAmount) > 0 && (
-              <Group justify="space-between">
-                <Text size="sm" c="dimmed">You will receive</Text>
-                <Text size="sm" fw={600} c={Number(withdrawAmount) / exchangeRate >= (bitgetMinimums[(wallet?.bitgetNetwork || 'trc20').toLowerCase()] || 10) ? "green" : "red"}>
-                  ~${(Number(withdrawAmount) / exchangeRate).toFixed(2)} USDT
-                </Text>
-              </Group>
-            )}
-          </Paper>
-
-          <NumberInput
-            label="Amount (INR)"
-            description={selectedMethod === 'bitget' ? `Min: ₹${Math.ceil((bitgetMinimums[(wallet?.bitgetNetwork || 'trc20').toLowerCase()] || 10) * exchangeRate * 1.01).toLocaleString()} (~$${bitgetMinimums[(wallet?.bitgetNetwork || 'trc20').toLowerCase()] || 10} USDT)` : undefined}
-            placeholder="Enter amount to withdraw"
-            value={withdrawAmount}
-            onChange={(val) => setWithdrawAmount(val as number)}
-            min={1}
-            max={Math.min(wallet?.balanceINR || 0, 500000)}
-            step={1}
-            prefix="₹"
-            thousandSeparator=","
-            size="md"
-            decimalScale={2}
-            error={selectedMethod === 'bitget' && withdrawAmount && Number(withdrawAmount) / exchangeRate < (bitgetMinimums[(wallet?.bitgetNetwork || 'trc20').toLowerCase()] || 10) ? `Amount below minimum ($${bitgetMinimums[(wallet?.bitgetNetwork || 'trc20').toLowerCase()] || 10} USDT)` : undefined}
-          />
-
-          <Text size="sm" fw={500} c="dimmed">
-            Quick Select:
-          </Text>
-          <div className={classes.amountGrid}>
-            {predefinedAmounts.map((amount) => {
-              const isDisabled = amount > (wallet?.balanceINR || 0);
-              const isSelected = withdrawAmount === amount;
-              return (
-                <div
-                  key={amount}
-                  className={`${classes.amountCard} ${isSelected ? classes.amountSelected : ""} ${isDisabled ? classes.amountDisabled : ""}`}
-                  onClick={() => !isDisabled && setWithdrawAmount(amount)}
-                >
-                  <Text size="sm" fw={500}>₹{amount.toLocaleString()}</Text>
-                  <Text size="xs" c={isSelected ? "white" : "dimmed"}>
-                    ~${(amount / exchangeRate).toFixed(2)}
-                  </Text>
-                </div>
-              );
-            })}
-          </div>
-
-          {withdrawAmount && Number(withdrawAmount) > 0 && (
-            <Paper withBorder p="md" radius="md" bg={selectedMethod === 'bitget' ? "teal.0" : "green.0"}>
-              <Group justify="space-between">
-                <Text size="sm" fw={500}>You will receive (approx)</Text>
-                <Text size="lg" fw={700} c={selectedMethod === 'bitget' ? "teal.8" : "green"}>
-                  {selectedMethod === 'bitget'
-                    ? `${(Number(withdrawAmount) / exchangeRate).toFixed(2)} ${bitgetSettings?.currency || "USDT"}`
-                    : `$${(Number(withdrawAmount) / exchangeRate).toFixed(2)} USD`
-                  }
-                </Text>
-              </Group>
+                </Group>
+              </Stack>
             </Paper>
-          )}
 
-          <Divider />
-
-          <Group justify="flex-end" gap="sm">
             <Button
-              size="md"
-              variant="light"
-              onClick={() => setWithdrawalModal(false)}
-              disabled={createWithdrawalMutation.isPending}
+              size="lg"
               radius="md"
-              color="#2d1b4e"
-            >
-              Cancel
-            </Button>
-            <Button
-              size="md"
               className={classes.withdrawBtn}
               onClick={handleWithdraw}
               loading={createWithdrawalMutation.isPending}
-              disabled={!withdrawAmount || Number(withdrawAmount) < 1}
-              leftSection={selectedMethod === 'bitget' ? <RiExchangeFundsLine /> : <FaDollarSign />}
+              fullWidth
             >
-              Withdraw via {selectedMethod === 'bitget' ? 'Bitget' : 'Stripe'}
+              Confirm Disbursement
             </Button>
-          </Group>
-        </Stack>
-      </Modal>
+          </Stack>
+        </Modal>
 
-      {/* Bitget Wallet Modal */}
-      <Modal
-        opened={bitgetWalletModal}
-        onClose={() => setBitgetWalletModal(false)}
-        title="Add Bitget Wallet Address"
-        centered
-        size="md"
-      >
-        <Stack gap="md">
-          <Alert icon={<RiExchangeFundsLine />} color="teal" variant="light">
-            <Text size="sm">
-              Enter your {bitgetSettings?.currency || "USDT"} wallet address. Make sure it supports the {bitgetSettings?.network || "TRC20"} network.
-            </Text>
-          </Alert>
-
-          <Select
-            label="Network"
-            description="Select the blockchain network for receiving funds"
-            value={bitgetNetwork}
-            onChange={(val) => setBitgetNetwork(val || "trc20")}
-            data={[
-              { value: "trc20", label: "Tron (TRC20) - Lowest Fees" },
-              { value: "bep20", label: "BSC (BEP20)" },
-              { value: "erc20", label: "Ethereum (ERC20)" },
-              { value: "matic", label: "Polygon" },
-              { value: "sol", label: "Solana" },
-            ]}
-          />
-
-          <TextInput
-            label="Wallet Address"
-            placeholder="Enter your wallet address"
-            value={bitgetAddress}
-            onChange={(e) => setBitgetAddress(e.target.value)}
-            description="Double-check your address. Incorrect addresses may result in lost funds."
-          />
-
-          {wallet?.bitgetWalletAddress && (
-            <Paper withBorder p="sm" radius="md" bg="gray.0">
-              <Text size="xs" c="dimmed">Current Address:</Text>
-              <Text size="xs" style={{ fontFamily: "monospace", wordBreak: "break-all" }}>
-                {wallet.bitgetWalletAddress}
-              </Text>
-            </Paper>
-          )}
-
-          <Alert icon={<FaInfoCircle />} color="red" variant="light">
-            <Text size="xs">
-              <strong>Warning:</strong> Sending to an incorrect address or wrong network will result in permanent loss of funds. We are not responsible for lost funds due to user error.
-            </Text>
-          </Alert>
-
-          <Divider />
-
-          <Group justify="flex-end" gap="sm">
+        {}
+        <Modal
+          opened={bitgetWalletModal}
+          onClose={() => setBitgetWalletModal(false)}
+          title="Node Configuration"
+          centered
+          radius="24px"
+        >
+          <Stack gap="md">
+            <Select
+              label="Blockchain Network"
+              placeholder="Select protocol"
+              value={bitgetNetwork}
+              onChange={(val) => setBitgetNetwork(val || "trc20")}
+              data={[
+                { value: "trc20", label: "Tron (TRC20) - Zero Settlement Fee" },
+                { value: "bep20", label: "BNB Smart Chain (BEP20)" },
+                { value: "erc20", label: "Ethereum (ERC20)" },
+              ]}
+            />
+            <TextInput
+              label="Wallet Endpoint Address"
+              placeholder="Enter public key"
+              value={bitgetAddress}
+              onChange={(e) => setBitgetAddress(e.target.value)}
+            />
             <Button
-              size="md"
-              variant="light"
-              onClick={() => setBitgetWalletModal(false)}
-              disabled={saveBitgetWalletMutation.isPending}
-              color="#2d1b4e"
-              radius="md"
-            >
-              Cancel
-            </Button>
-            <Button
-              size="md"
+              className={classes.stripeBtn}
               onClick={handleSaveBitgetWallet}
               loading={saveBitgetWalletMutation.isPending}
-              disabled={!bitgetAddress.trim()}
-              leftSection={<RiExchangeFundsLine />}
-              style={{ background: "#00D4AA", color: "#FFFFFF" }}
+              fullWidth
             >
-              Save Wallet
+              Update Node
             </Button>
-          </Group>
-        </Stack>
-      </Modal>
-    </div>
-  );
-};
+          </Stack>
+        </Modal>
+      </div>
+    );
+  };
 
-export default USDWithdrawalScreen;
+  const PlusIcon = () => <FaPlus size={14} />;
+
+  export default USDWithdrawalScreen;

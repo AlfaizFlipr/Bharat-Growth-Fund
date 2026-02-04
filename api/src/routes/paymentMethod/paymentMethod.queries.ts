@@ -1,12 +1,13 @@
 import { Router } from "express";
 import { commonsMiddleware } from "../../middleware";
 import paymentMethodController from "../../controllers/paymentMethodControllers/paymentMethod.controller";
+import { handleMulterError, uploadQRCode } from "../../middleware/upload.middleware";
 
 const {
   createPaymentMethod,
   getAllPaymentMethods,
   updatePaymentMethod,
-  deletePaymentMethod
+  deletePaymentMethod,
 } = paymentMethodController;
 
 export default (router: Router) => {
@@ -20,12 +21,16 @@ export default (router: Router) => {
   router.post(
     "/admin/payment-methods",
     commonsMiddleware.checkAdminAuth,
+    uploadQRCode,
+    handleMulterError,
     createPaymentMethod
   );
 
   router.put(
     "/admin/payment-methods/:methodId",
     commonsMiddleware.checkAdminAuth,
+    uploadQRCode,
+    handleMulterError,
     updatePaymentMethod
   );
 

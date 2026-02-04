@@ -18,21 +18,21 @@ export default (router: Router) => {
     levelController.getAllLevelsAdmin
   );
 
-  // Create new level (Admin)
+  
   router.post(
     '/admin/levels',
     commonsMiddleware.checkAdminAuth,
     levelController.createLevel
   );
   
-  // Update level (Admin)
+  
   router.put(
     '/admin/levels/:levelId',
     commonsMiddleware.checkAdminAuth,
     levelController.updateLevel
   );
 
-  // Delete level (Admin)
+  
   router.delete(
     '/admin/levels/:levelId',
     commonsMiddleware.checkAdminAuth,

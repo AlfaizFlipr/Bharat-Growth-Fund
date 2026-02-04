@@ -1,24 +1,24 @@
-// models/USDWallet/USDWallet.model.ts
+
 import { Schema, model, Document } from 'mongoose';
 
 export interface IUSDWallet extends Document {
   userId: Schema.Types.ObjectId;
-  balanceINR: number; // Balance stored in INR (admin funds this)
-  balanceUSD: number; // Calculated USD equivalent
+  balanceINR: number; 
+  balanceUSD: number; 
   totalFundedINR: number;
   totalWithdrawnUSD: number;
   
-  // Stripe Connect details
+  
   stripeConnectAccountId: string | null;
   stripeConnectStatus: 'not_connected' | 'pending' | 'connected' | 'restricted';
   stripeOnboardingComplete: boolean;
   
-  // Bitget wallet details
+  
   bitgetWalletAddress: string | null;
-  bitgetNetwork: string | null; // trc20, bep20, erc20, etc.
+  bitgetNetwork: string | null; 
   bitgetVerified: boolean;
   
-  // Preferred withdrawal method
+  
   preferredWithdrawalMethod: 'stripe' | 'bitget' | null;
   
   lastExchangeRate: number;
@@ -68,7 +68,7 @@ const usdWalletSchema = new Schema<IUSDWallet>(
       type: Boolean,
       default: false,
     },
-    // Bitget wallet fields
+    
     bitgetWalletAddress: {
       type: String,
       default: null,
@@ -89,7 +89,7 @@ const usdWalletSchema = new Schema<IUSDWallet>(
     },
     lastExchangeRate: {
       type: Number,
-      default: 83, // Default INR to USD rate
+      default: 83, 
     },
     isActive: {
       type: Boolean,
@@ -99,7 +99,7 @@ const usdWalletSchema = new Schema<IUSDWallet>(
   { timestamps: true }
 );
 
-// Index for faster queries
+
 usdWalletSchema.index({ userId: 1 });
 usdWalletSchema.index({ stripeConnectAccountId: 1 });
 usdWalletSchema.index({ bitgetWalletAddress: 1 });

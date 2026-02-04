@@ -1,18 +1,18 @@
-// models/withdrawal.model.ts
+
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IWithdrawal extends Document {
   userId: mongoose.Types.ObjectId;
   walletType: 'mainWallet' | 'commissionWallet';
   amount: number;
-  bankAccountId?: mongoose.Types.ObjectId; // Optional for USD users
+  bankAccountId?: mongoose.Types.ObjectId; 
   accountHolderName?: string;
   bankName?: string;
   accountNumber?: string;
   ifscCode?: string;
   accountType?: 'savings' | 'current' | 'qr';
-  qrCodeImage?: string; // Path to QR code image if QR payment
-  isUSDWithdrawal?: boolean; // True if this is a USD user withdrawal (goes to USD Wallet)
+  qrCodeImage?: string; 
+  isUSDWithdrawal?: boolean; 
   status: 'pending' | 'processing' | 'completed' | 'rejected';
   transactionId?: string;
   remarks?: string;
@@ -42,23 +42,23 @@ const WithdrawalSchema: Schema = new Schema(
     bankAccountId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'BankAccount',
-      required: false, // Optional for USD users
+      required: false, 
     },
     accountHolderName: {
       type: String,
-      required: false, // Optional for USD users
+      required: false, 
     },
     bankName: {
       type: String,
-      required: false, // Optional for USD users
+      required: false, 
     },
     accountNumber: {
       type: String,
-      required: false, // Optional for USD users
+      required: false, 
     },
     ifscCode: {
       type: String,
-      required: false, // Optional for USD users
+      required: false, 
       uppercase: true,
     },
     accountType: {
@@ -98,11 +98,11 @@ const WithdrawalSchema: Schema = new Schema(
   }
 );
 
-// Compound indexes
+
 WithdrawalSchema.index({ userId: 1, status: 1 });
 WithdrawalSchema.index({ status: 1, createdAt: -1 });
 
-// Update completedAt when status changes to completed
+
 WithdrawalSchema.pre('save', function (next) {
   if (this.isModified('status') && this.status === 'completed') {
     this.completedAt = new Date();

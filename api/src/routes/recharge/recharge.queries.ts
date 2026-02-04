@@ -4,21 +4,21 @@ import rechargeController from "../../controllers/rechargeControllers/recharge.c
 import { handleMulterError, paymentProofUpload } from "../../middleware/upload.middleware";
 
 export default (router: Router) => {
-  // 🔹 Get wallet info
+  
   router.get(
     "/wallet-info",
     commonsMiddleware.checkUserAuth,
     rechargeController.getWalletInfo
   );
 
-  // 🔹 Get available payment methods
+  
   router.get(
     "/payment-methods",
     commonsMiddleware.checkUserAuth,
     rechargeController.getPaymentMethods
   );
 
-  // 🔹 Create recharge order
+  
   router.post(
     "/create-order",
     commonsMiddleware.checkUserAuth,
@@ -31,7 +31,7 @@ export default (router: Router) => {
     rechargeController.generateUPIQRCode
   );
 
-  // 🔹 Verify payment (upload proof)
+  
   router.post(
     "/verify-payment",
     commonsMiddleware.checkUserAuth,
@@ -40,16 +40,16 @@ export default (router: Router) => {
     rechargeController.verifyRechargePayment
   );
 
-  // 🔹 Get recharge history
+  
   router.get(
     "/history",
     commonsMiddleware.checkUserAuth,
     rechargeController.getRechargeHistory
   );
 
-  // =========================
-  // 🔸 Admin Routes
-  // =========================
+  
+  
+  
 
   router.get(
     "/admin/recharges",

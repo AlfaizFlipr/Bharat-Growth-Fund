@@ -1,4 +1,4 @@
-// validators/withdrawal.validator.ts
+
 import * as yup from "yup";
 
 export const addBankAccount = yup.object({

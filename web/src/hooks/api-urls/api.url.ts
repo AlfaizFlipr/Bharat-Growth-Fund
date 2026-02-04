@@ -8,14 +8,8 @@ const rechargePrefix = "/recharge"
 
 const levelPrefix = "/level";
 
-const teamPrefix = "/team";
-
 const verificationPrefix = "/verification";
 
-
-const conferenceNews = "/conferenceNews";
-
-const luckydrawPrefix = "/luckydraw"
 
 export const authUrls = {
   LOGIN: authPrefix + "/login",
@@ -23,14 +17,6 @@ export const authUrls = {
   VERIFYUSER: authPrefix + "/profile",
   LOGOUT: authPrefix + "/logout",
   UPDATEPROFILE: authPrefix + "/update",
-};
-
-export const teamUrls = {
-  TEAM_STATS: teamPrefix + "/stats",
-  REFERRAL_LINK: teamPrefix + "/referral-link",
-  TEAM_MEMBERS: (level: string) => `${teamPrefix}/members/${level}`,
-  REFERRAL_HISTORY: teamPrefix + "/referral-history",
-  MY_TEAM_REFERRALS: teamPrefix + "/my-referrals",
 };
 
 export const taskUrls = {
@@ -80,40 +66,17 @@ export const verificationUrls = {
   UPLOAD_FILE: verificationPrefix + "/upload-photo",
 };
 
-export const conferenceNewsUrls = {
-  ACTIVE: conferenceNews + "/active",
-  ALL: conferenceNews + "/all",
-  CREATE: conferenceNews + "/create",
-  UPLOAD_IMAGE: conferenceNews + "/upload-image",
-  CLOSE: conferenceNews + "/close",
-  DELETE: conferenceNews + "/delete",
-  TOGGLE_STATUS: conferenceNews + "/toggle-status",
-};
-
-
-export const luckyDrawUrls = {
-  ACTIVE: luckydrawPrefix + "/active",
-  DETAILS: luckydrawPrefix + "/details/:drawId",
-  PARTICIPATE: luckydrawPrefix + "/participate",
-  UPLOAD_IMAGE: luckydrawPrefix + "/admin/upload-image",
-  CREATE: luckydrawPrefix + "/admin/create",
-  ALL: luckydrawPrefix + "/admin/all",
-  DELETE: luckydrawPrefix + "/admin/delete/:drawId",
-  TOGGLE_STATUS: luckydrawPrefix + "/admin/toggle-status/:drawId",
-  SELECT_WINNERS: luckydrawPrefix + "/admin/select-winners/:drawId",
-  ADMIN_DETAILS: luckydrawPrefix + "/admin/details/:drawId",
-};
 
 const usdWithdrawalPrefix = "/usd-withdrawal";
 
 export const usdWithdrawalUrls = {
   WALLET_INFO: usdWithdrawalPrefix + "/wallet-info",
-  CREATE_CONNECT_ACCOUNT: usdWithdrawalPrefix + "/create-connect-account",
-  CHECK_CONNECT_STATUS: usdWithdrawalPrefix + "/check-connect-status",
+  CREATE_CONNECT_ACCOUNT: usdWithdrawalPrefix + "/stripe/connect",
+  CHECK_CONNECT_STATUS: usdWithdrawalPrefix + "/stripe/status",
   CREATE_WITHDRAWAL: usdWithdrawalPrefix + "/create",
   WITHDRAWAL_HISTORY: usdWithdrawalPrefix + "/history",
   TRANSACTION_HISTORY: usdWithdrawalPrefix + "/transactions",
-  // Bitget endpoints
-  WITHDRAWAL_METHODS: usdWithdrawalPrefix + "/withdrawal-methods",
-  SAVE_BITGET_WALLET: usdWithdrawalPrefix + "/bitget-wallet",
+  
+  WITHDRAWAL_METHODS: usdWithdrawalPrefix + "/methods",
+  SAVE_BITGET_WALLET: usdWithdrawalPrefix + "/save-bitget-wallet",
 };

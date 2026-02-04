@@ -1,53 +1,139 @@
-import { Flex, Text, ScrollArea } from "@mantine/core";
-import CommonHeader from "../../components/CommonHeader/CommonHeader";
+import React from "react";
+import {
+  Box,
+  Text,
+  ScrollArea,
+  Container,
+  Title,
+  Paper,
+  ThemeIcon,
+  Button,
+} from "@mantine/core";
+import { FaChartLine } from "react-icons/fa";
 
-const CompanyIntro = () => {
+const CompanyIntro: React.FC = () => {
   return (
-    <Flex direction="column" style={{ height: "100vh", backgroundColor: "#ffffff" }}>
-      <CommonHeader heading="Company Introduction" />
-
-      <ScrollArea style={{ flex: 1, padding: "1rem" }}>
-        <Text c="#8FABD4" fw={700} size="xl" mb="md">
-          The Apple Logo: History, Meaning, Design Influences, and Evolution
+    <Box bg="#f8f9fa" style={{ minHeight: "100vh" }}>
+      {/* Header Section */}
+      <Box
+        style={{
+          background: "linear-gradient(135deg, #0f2027 0%, #203a43 100%)",
+          padding: "60px 20px 40px",
+          borderRadius: "0 0 30px 30px",
+          color: "white",
+          textAlign: "center",
+        }}
+      >
+        <ThemeIcon size={60} radius="xl" color="teal" variant="light" mb="md">
+          <FaChartLine size={30} />
+        </ThemeIcon>
+        <Title order={2}>Bharat Growth Fund Overview</Title>
+        <Text size="sm" c="rgba(255,255,255,0.7)" mt={4}>
+          General Summary of Themes Often Associated with “Bharat Growth” Funds
         </Text>
+      </Box>
 
-        <Text c="#333333" size="sm" lh={1.7}>
-          Apple Inc. is an American multinational technology company headquartered in Cupertino, California, 
-          known for its consumer electronics, software, and online services. It was founded in 1976 by Steve Jobs, 
-          Steve Wozniak, and Ronald Wayne and is best known for products like the iPhone, iPad, and Mac computers, 
-          along with operating systems like iOS and macOS. Apple is a major global technology company, publicly traded 
-          on the NASDAQ stock exchange under the ticker symbol AAPL.
-        </Text>
+      {/* Content Section */}
+      <Container size="sm" p="md" mt={-20}>
+        <Paper radius="lg" p="xl" withBorder shadow="sm">
+          <ScrollArea h="60vh" offsetScrollbars>
+            <Box mb="md">
+              <Text size="sm" lh={1.7} c="dimmed">
+                “Bharat Growth” funds are typically positioned as investment
+                vehicles focused on India’s long-term economic development,
+                industrial transformation, and wealth creation opportunities.
+                Below are common <b>themes and focus areas</b> often associated
+                with such funds.
+              </Text>
+            </Box>
 
-        <Text mt="md" c="#333333" size="sm" lh={1.7}>
-          <b style={{ color: "#8FABD4" }}>Founding and Early History:</b> Apple was founded in 1976, initially as Apple Computer, Inc., by Steve Jobs, 
-          Steve Wozniak, and Ronald Wayne. The company incorporated the following year. Its early history includes 
-          the development of the Apple II personal computer, which was a commercial success.
-        </Text>
+            <Box mb="md">
+              <Text fw={700} c="#0f2027" mb={4}>
+                1. Infrastructure Development
+              </Text>
+              <Text size="sm" lh={1.7} c="dimmed">
+                Many Bharat Growth-oriented funds invest heavily in
+                infrastructure — including transport, energy, housing, and
+                logistics. The aim is to capture value from India’s major
+                government initiatives like the <b>National Infrastructure
+                Pipeline</b> and <b>Smart Cities Mission</b>.
+              </Text>
+            </Box>
 
-        <Text mt="md" c="#333333" size="sm" lh={1.7}>
-          <b style={{ color: "#8FABD4" }}>Key Products and Services:</b> The company's product line has expanded significantly over the years to 
-          include the iPhone, iPad, Apple Watch, Apple TV, and Mac computers. It also develops and sells associated 
-          software and online services, including the iOS and macOS operating systems.
-        </Text>
+            <Box mb="md">
+              <Text fw={700} c="#0f2027" mb={4}>
+                2. Manufacturing and “Make in India”
+              </Text>
+              <Text size="sm" lh={1.7} c="dimmed">
+                These funds often align with the <b>Make in India</b> vision,
+                investing in sectors like automobiles, electronics,
+                pharmaceuticals, and defense manufacturing — aiming to boost
+                domestic production and reduce import dependency.
+              </Text>
+            </Box>
 
-        <Text mt="md" c="#333333" size="sm" lh={1.7}>
-          <b style={{ color: "#8FABD4" }}>Company Evolution:</b> Apple changed its name from Apple Computer, Inc. to Apple Inc. in 2007 to reflect 
-          its expansion from computers to other consumer electronics, such as the iPhone. Under the leadership of 
-          CEO Tim Cook, the company has continued to grow and innovate, solidifying its position as one of the 
-          world's largest technology companies by revenue.
-        </Text>
+            <Box mb="md">
+              <Text fw={700} c="#0f2027" mb={4}>
+                3. Financial Inclusion and MSME Empowerment
+              </Text>
+              <Text size="sm" lh={1.7} c="dimmed">
+                Bharat Growth funds may also target micro-, small-, and
+                medium-enterprise (MSME) segments, focusing on credit access,
+                digital finance, and startup support, fostering India’s
+                entrepreneurial ecosystem.
+              </Text>
+            </Box>
 
-        <Text mt="md" c="#333333" size="sm" lh={1.7}>
-          <b style={{ color: "#8FABD4" }}>Stock and Market Presence:</b> Apple Inc. is a publicly traded company on the NASDAQ stock exchange (AAPL) 
-          and is a component of the Dow Jones Industrial Average and the NASDAQ-100.
-        </Text>
+            <Box mb="md">
+              <Text fw={700} c="#0f2027" mb={4}>
+                4. Rural Prosperity and Agri-Modernization
+              </Text>
+              <Text size="sm" lh={1.7} c="dimmed">
+                Investment in agriculture technology, supply chain
+                modernization, rural infrastructure, and financial services for
+                farmers are typical priorities to ensure inclusive growth and
+                rural empowerment.
+              </Text>
+            </Box>
 
-        <Text mt="md" c="#333333" size="sm" lh={1.7}>
-          <b style={{ color: "#8FABD4" }}>Headquarters:</b> The company is headquartered in Cupertino, California, in the heart of Silicon Valley.
-        </Text>
-      </ScrollArea>
-    </Flex>
+            <Box mb="md">
+              <Text fw={700} c="#0f2027" mb={4}>
+                5. Digital Transformation and Innovation
+              </Text>
+              <Text size="sm" lh={1.7} c="dimmed">
+                These funds recognize technology as a growth enabler — focusing
+                on fintech, e-commerce, renewable energy, and data-driven
+                businesses that represent India’s emerging digital economy.
+              </Text>
+            </Box>
+
+            <Box>
+              <Text fw={700} c="#0f2027" mb={4}>
+                6. Sustainable and Inclusive Development
+              </Text>
+              <Text size="sm" lh={1.7} c="dimmed">
+                “Bharat Growth” often reflects a commitment to sustainability.
+                Funds may integrate <b>ESG (Environmental, Social, and
+                Governance)</b> principles to support clean energy, green
+                technology, and social welfare projects.
+              </Text>
+            </Box>
+          </ScrollArea>
+        </Paper>
+
+        {/* Back Button */}
+        <Button
+          fullWidth
+          mt="xl"
+          size="lg"
+          radius="md"
+          color="teal"
+          onClick={() => window.history.back()}
+        >
+          Back
+        </Button>
+      </Container>
+    </Box>
   );
 };
 

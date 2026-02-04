@@ -105,7 +105,7 @@ const UpdateProfileModal: React.FC<UpdateProfileModalProps> = ({
       if (phone.trim() && phone !== userData.phone) payload.phone = phone.trim();
       if (selectedFile) payload.picture = selectedFile;
 
-      // Check if there's anything to update
+      
       if (!payload.name && !payload.phone && !payload.picture) {
         notifications.show({
           title: "No Changes",
@@ -124,7 +124,7 @@ const UpdateProfileModal: React.FC<UpdateProfileModalProps> = ({
           color: "green",
         });
 
-        // Reset selected file after successful update
+        
         setSelectedFile(null);
         onClose();
       } else {

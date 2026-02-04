@@ -32,7 +32,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading }) => {
         {heading}
       </Text>
 
-      {/* Placeholder to balance layout */}
+      {}
       <div style={{ width: 24 }} />
     </Flex>
   );

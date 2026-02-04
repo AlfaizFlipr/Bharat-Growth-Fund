@@ -2,7 +2,8 @@
 
 import { Flex } from "@mantine/core";
 import { useNavigate, useLocation } from "react-router-dom";
-import { FaHome, FaTasks, FaUsers, FaCrown, FaUser } from "react-icons/fa";
+import { FaHome, FaCrown, FaUser } from "react-icons/fa";
+import { FaBolt } from "react-icons/fa6";
 import { useQueryClient } from "@tanstack/react-query";
 import styles from "./BottomNavigator.module.scss";
 
@@ -13,9 +14,8 @@ const BottomNavigator = () => {
 
   const tabs = [
     { icon: FaHome, path: "/", label: "Home" },
-    { icon: FaTasks, path: "/task", label: "Task" },
-    { icon: FaUsers, path: "/team", label: "Team" },
     { icon: FaCrown, path: "/level", label: "Level" },
+    { icon: FaBolt, path: "/rewards", label: "Rewards" },
     { icon: FaUser, path: "/profile", label: "My" },
   ];
 
@@ -25,7 +25,6 @@ const BottomNavigator = () => {
     try {
       switch (path) {
         case "/profile":
-          // Refetch verification status query
           await queryClient.invalidateQueries({ queryKey: ["verifyUser"] });
           break;
 
@@ -33,25 +32,18 @@ const BottomNavigator = () => {
           await queryClient.invalidateQueries({ queryKey: ["allLevels"] });
           break;
 
-        case "/team":
+        case "/rewards":
           await Promise.all([
             queryClient.invalidateQueries({ queryKey: ["team-stats"] }),
             queryClient.invalidateQueries({ queryKey: ["referral-link"] }),
             queryClient.invalidateQueries({ queryKey: ["team-members"] }),
+            queryClient.invalidateQueries({ queryKey: ["tasks"] }),
           ]);
           break;
 
-        case "/task":
-          // Refetch infinite tasks query
-          await queryClient.invalidateQueries({ queryKey: ["tasks"] });
-          break;
-
         case "/":
-          // Refetch home page queries
           await Promise.all([
             queryClient.invalidateQueries({ queryKey: ["verifyUser"] }),
-            queryClient.invalidateQueries({ queryKey: ["activeConferenceNews"] }),
-            queryClient.invalidateQueries({ queryKey: ["activeLuckyDraws"] }),
           ]);
           break;
 
@@ -60,7 +52,6 @@ const BottomNavigator = () => {
       }
     } catch (error) {
       console.error("Error invalidating queries:", error);
-      // Don't block navigation even if invalidation fails
     }
   };
 

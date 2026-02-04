@@ -1,4 +1,4 @@
-// models/USDWalletTransaction/USDWalletTransaction.model.ts
+
 import { Schema, model, Document } from 'mongoose';
 
 export interface IUSDWalletTransaction extends Document {
@@ -71,7 +71,7 @@ const usdWalletTransactionSchema = new Schema<IUSDWalletTransaction>(
   { timestamps: true }
 );
 
-// Indexes
+
 usdWalletTransactionSchema.index({ userId: 1, createdAt: -1 });
 usdWalletTransactionSchema.index({ referenceType: 1 });
 

@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { userUrls } from "../api-urls/api.url";
 import { request } from "../../lib/axios.config";
 
-// ==================== Types ====================
+
 
 interface UserFilters {
   page?: number;
@@ -10,7 +10,7 @@ interface UserFilters {
   search?: string;
   verificationStatus?: string;
   userLevel?: string;
-  teamLevel?: string;
+
   sortBy?: string;
   sortOrder?: string;
 }
@@ -45,21 +45,21 @@ interface UpdateLevelPayload {
 
 interface AddWalletAmountPayload {
   userId: string;
-  walletType: "mainWallet" | "commissionWallet";
+  walletType: "mainWallet";
   amount: number;
 }
 
 interface DeductWalletAmountPayload {
   userId: string;
-  walletType: "mainWallet" | "commissionWallet";
+  walletType: "mainWallet";
   amount: number;
   reason?: string;
 }
 
 
-// ==================== Fetch Queries ====================
 
-// ✅ Get all users with filters
+
+
 const fetchAllUsers = async (filters: UserFilters) => {
   const params = new URLSearchParams();
 
@@ -77,7 +77,7 @@ const fetchAllUsers = async (filters: UserFilters) => {
   return response.data;
 };
 
-// ✅ Get single user by ID
+
 const fetchUserById = async (userId: string) => {
   const response = await request({
     url: userUrls.USER_BY_ID(userId),
@@ -87,9 +87,9 @@ const fetchUserById = async (userId: string) => {
   return response.data;
 };
 
-// ==================== Mutations ====================
 
-// ✅ Reset user password
+
+
 const resetUserPassword = async ({
   userId,
   newPassword,
@@ -103,7 +103,7 @@ const resetUserPassword = async ({
   return response.data;
 };
 
-// ✅ Update verification status
+
 const updateVerification = async ({
   userId,
   isVerified,
@@ -117,7 +117,7 @@ const updateVerification = async ({
   return response.data;
 };
 
-// ✅ Update Aadhaar verification status
+
 const updateAadhaarVerification = async ({
   userId,
   status,
@@ -132,7 +132,7 @@ const updateAadhaarVerification = async ({
   return response.data;
 };
 
-// ✅ Toggle user active/inactive status
+
 const toggleUserStatus = async ({ userId, isActive }: UpdateStatusPayload) => {
   const response = await request({
     url: userUrls.STATUS(userId),
@@ -143,7 +143,7 @@ const toggleUserStatus = async ({ userId, isActive }: UpdateStatusPayload) => {
   return response.data;
 };
 
-// ✅ Update user level / promotion
+
 const updateUserLevel = async ({
   userId,
   userLevel,
@@ -188,17 +188,17 @@ const deductWalletAmount = async ({
   return response.data;
 };
 
-// ==================== React Query Hooks ====================
 
-// ✅ Fetch All Users
+
+
 export const useAllUsers = (filters: UserFilters) =>
   useQuery({
     queryKey: ["admin-users", filters],
     queryFn: () => fetchAllUsers(filters),
-    staleTime: 30 * 1000, // 30s
+    staleTime: 30 * 1000, 
   });
 
-// ✅ Fetch Single User
+
 export const useUserById = (userId: string) =>
   useQuery({
     queryKey: ["admin-user", userId],
@@ -206,7 +206,7 @@ export const useUserById = (userId: string) =>
     enabled: !!userId,
   });
 
-// ✅ Reset Password Mutation
+
 export const useResetPassword = () => {
   const queryClient = useQueryClient();
 
@@ -218,7 +218,7 @@ export const useResetPassword = () => {
   });
 };
 
-// ✅ Update Verification Mutation
+
 export const useUpdateVerification = () => {
   const queryClient = useQueryClient();
 
@@ -230,7 +230,7 @@ export const useUpdateVerification = () => {
   });
 };
 
-// ✅ Update Aadhaar Mutation
+
 export const useUpdateAadhaar = () => {
   const queryClient = useQueryClient();
 
@@ -242,7 +242,7 @@ export const useUpdateAadhaar = () => {
   });
 };
 
-// ✅ Toggle User Status Mutation
+
 export const useToggleStatus = () => {
   const queryClient = useQueryClient();
 
@@ -254,7 +254,7 @@ export const useToggleStatus = () => {
   });
 };
 
-// ✅ Update User Level Mutation
+
 export const useUpdateLevel = () => {
   const queryClient = useQueryClient();
 

@@ -1,52 +1,43 @@
 .mainContainer {
-  max-width: 1440px;
-  height: 90vh;
-  margin: auto;
+  min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
+  background: #f1f5f9;
 }
-.formContainer {
-  display: flex;
-  flex-direction: column;
-  max-width: 500px;
-  align-items: center;
-  gap: 1rem;
-  width: 100%;
-}
-.loginForm {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  gap: 1rem;
-  margin-top: 20px;
-}
-.imgContainer {
-  border-radius: 20px;
 
-  width: 50%;
-}
-.logoImg {
+.loginCard {
   width: 100%;
-  height: auto;
+  max-width: 420px;
+  padding: 32px;
+  background-color: #ffffff;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
-.card {
-  padding: 30px;
-  border-radius: 30px;
-  box-shadow: 0px 2px 6px 4px #00000021;
-  background-color: white;
-  width: 450px;
-  display: flex;
-  justify-content: center;
+
+.formLabel {
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 6px;
+  color: #334155;
 }
-.button {
-  margin-top: 10px;
-  color: white;
+
+.formInput {
+  &:focus {
+    border-color: #2563eb;
+  }
 }
-.label {
-  display: flex;
-  margin-bottom: 8px;
+
+.submitButton {
+  background-color: #1e3a8a;
+  transition: opacity 0.2s ease;
+
+  &:hover {
+    background-color: #1e40af;
+  }
 }
-.forgetPassword {
-  cursor: pointer;
+
+
+.orb1,
+.orb2 {
+  display: none;
 }

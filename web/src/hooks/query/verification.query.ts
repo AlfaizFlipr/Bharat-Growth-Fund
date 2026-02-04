@@ -60,7 +60,7 @@ export const useVerificationStatusQuery = () => {
   return useQuery<VerificationStatusResponse>({
     queryKey: ["verification-status"],
     queryFn: fetchVerificationStatus,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000, 
   });
 };
 
@@ -72,7 +72,7 @@ const uploadFile = async (file: File) => {
   formData.append("aadhaarPhoto", file);
 
   const response = await request({
-    url: verificationUrls.UPLOAD_FILE, // e.g. /verification/upload-photo
+    url: verificationUrls.UPLOAD_FILE, 
     method: "POST",
     data: formData,
     withCredentials: true,
@@ -93,7 +93,7 @@ export const useFileUploadMutation = () => {
 ===================================================== */
 const uploadAadhaar = async (payload: UploadAadhaarPayload) => {
   const response = await request({
-    url: verificationUrls.UPLOAD_AADHAAR, // e.g. /verification/upload-aadhaar
+    url: verificationUrls.UPLOAD_AADHAAR, 
     method: "POST",
     data: payload,
     withCredentials: true,
@@ -107,7 +107,7 @@ export const useUploadAadhaarMutation = () => {
   return useMutation<UploadAadhaarResponse, Error, UploadAadhaarPayload>({
     mutationFn: uploadAadhaar,
     onSuccess: () => {
-      // ✅ Refetch verification status after successful upload
+      
       queryClient.invalidateQueries({ queryKey: ["verification-status"] });
     },
   });

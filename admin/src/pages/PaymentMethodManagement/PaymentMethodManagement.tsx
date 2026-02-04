@@ -16,6 +16,8 @@ import {
   Alert,
   Tooltip,
   Switch,
+  Stack,
+  ThemeIcon,
 } from "@mantine/core";
 import {
   FiSearch,
@@ -35,12 +37,13 @@ import {
   useDeletePaymentMethod,
 } from "../../hooks/query/Payment.query";
 import classes from "./index.module.scss";
+import Heading from '../../@ui/common/Heading';
 
 interface PaymentMethodFormData {
   methodName: string;
   methodType: "upi" | "bank";
   upiId?: string;
-  qrCode?: string;
+  qrCode?: string | File | null;
   accountName?: string;
   accountNumber?: string;
   ifscCode?: string;
@@ -49,7 +52,7 @@ interface PaymentMethodFormData {
 }
 
 const PaymentMethodManagement = () => {
-  // Filter states
+  
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [activePage, setActivePage] = useState(1);
@@ -64,7 +67,7 @@ const PaymentMethodManagement = () => {
     methodName: "",
     methodType: "upi",
     upiId: "",
-    qrCode: "",
+    qrCode: null,
     accountName: "",
     accountNumber: "",
     ifscCode: "",
@@ -86,7 +89,7 @@ const PaymentMethodManagement = () => {
   const methods = data?.paymentMethods || [];
   const pagination = data?.pagination || {};
 
-  // Handlers
+  
   const handleCreateMethod = () => {
     setFormData({
       methodName: "",
@@ -158,7 +161,20 @@ const PaymentMethodManagement = () => {
     }
 
     try {
-      await createMethodMutation.mutateAsync(formData);
+      const payload = new FormData();
+      payload.append('methodName', formData.methodName);
+      payload.append('methodType', formData.methodType);
+      if (formData.upiId) payload.append('upiId', formData.upiId);
+      if (formData.accountName) payload.append('accountName', formData.accountName);
+      if (formData.accountNumber) payload.append('accountNumber', formData.accountNumber);
+      if (formData.ifscCode) payload.append('ifscCode', formData.ifscCode);
+      if (formData.bankName) payload.append('bankName', formData.bankName);
+      payload.append('isActive', String(formData.isActive));
+      if (formData.qrCode && formData.qrCode instanceof File) {
+        payload.append('qrCodeImage', formData.qrCode);
+      }
+
+      await createMethodMutation.mutateAsync(payload as any);
 
       notifications.show({
         title: "Success",
@@ -183,10 +199,20 @@ const PaymentMethodManagement = () => {
     if (!selectedMethod) return;
 
     try {
-      await updateMethodMutation.mutateAsync({
-        methodId: selectedMethod._id,
-        data: formData,
-      });
+      const payload = new FormData();
+      payload.append('methodName', formData.methodName);
+      payload.append('methodType', formData.methodType);
+      if (formData.upiId) payload.append('upiId', formData.upiId);
+      if (formData.accountName) payload.append('accountName', formData.accountName);
+      if (formData.accountNumber) payload.append('accountNumber', formData.accountNumber);
+      if (formData.ifscCode) payload.append('ifscCode', formData.ifscCode);
+      if (formData.bankName) payload.append('bankName', formData.bankName);
+      payload.append('isActive', String(formData.isActive));
+      if (formData.qrCode && formData.qrCode instanceof File) {
+        payload.append('qrCodeImage', formData.qrCode);
+      }
+
+      await updateMethodMutation.mutateAsync({ methodId: selectedMethod._id, data: payload as any });
 
       notifications.show({
         title: "Success",
@@ -309,13 +335,11 @@ const PaymentMethodManagement = () => {
 
   return (
     <Flex direction="column" gap="md" className={classes.container}>
-      {/* Header */}
-      <Paper p="md" shadow="xs" className={classes.header}>
+      {}
+      <Paper p="md" shadow="xs" className={classes.header} radius="md">
         <Group justify="space-between" mb="md">
           <Flex gap="xs" direction="column" align="flex-start">
-            <Text size="xl" fw={700} className={classes.title}>
-              Payment Method Management
-            </Text>
+            <Heading order={2}>Payment Method Management</Heading>
             <Text size="sm" c="dimmed" className={classes.subtitle}>
               Manage payment methods for recharges
             </Text>
@@ -323,101 +347,102 @@ const PaymentMethodManagement = () => {
           <Button
             leftSection={<FiPlus />}
             onClick={handleCreateMethod}
-            gradient={{ from: "blue", to: "cyan", deg: 90 }}
-            variant="gradient"
+            color="#0f2027"
+            radius="xl"
           >
             Add Method
           </Button>
         </Group>
 
-        {/* Filters */}
-        <Group gap="md" className={classes.filters}>
-          <TextInput
-            placeholder="Search payment methods..."
-            leftSection={<FiSearch />}
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-              setActivePage(1);
-            }}
-            style={{ flex: 1 }}
-            className={classes.searchInput}
-          />
-          <Select
-            placeholder="Type"
-            data={[
-              { value: "all", label: "All Types" },
-              { value: "upi", label: "UPI" },
-              { value: "bank", label: "Bank Transfer" },
-            ]}
-            value={typeFilter}
-            onChange={(value) => {
-              setTypeFilter(value || "all");
-              setActivePage(1);
-            }}
-            clearable
-          />
-        </Group>
-      </Paper>
-
-      {/* Table */}
-      <Paper shadow="xs" className={classes.tableContainer}>
-        <Table.ScrollContainer minWidth={800}>
-          <Table striped highlightOnHover>
-            <Table.Thead>
-              <Table.Tr>
-                <Table.Th ta="center">Method</Table.Th>
-                <Table.Th ta="center">Details</Table.Th>
-                <Table.Th ta="center">Status</Table.Th>
-                <Table.Th ta="center">Created</Table.Th>
-                <Table.Th ta="center">Actions</Table.Th>
-              </Table.Tr>
-            </Table.Thead>
-            <Table.Tbody>
-              {isLoading ? (
-                <Table.Tr>
-                  <Table.Td colSpan={9}>
-                    <Flex
-                      justify="center"
-                      direction="column"
-                      align="center"
-                      py="xl"
-                    >
-                      <Loader size="lg" />
-                      <Text c="dimmed" ml="sm">
-                        Loading Payment Method...
-                      </Text>
-                    </Flex>
-                  </Table.Td>
-                </Table.Tr>
-              ) : rows.length > 0 ? (
-                rows
-              ) : (
-                <Table.Tr>
-                  <Table.Td colSpan={9}>
-                    <Text ta="center" c="dimmed" py="xl">
-                      No Payment Method found
-                    </Text>
-                  </Table.Td>
-                </Table.Tr>
-              )}
-            </Table.Tbody>
-          </Table>
-        </Table.ScrollContainer>
-
-        {/* Pagination */}
-        {pagination.totalPages > 1 && (
-          <Group justify="center" p="md" className={classes.pagination}>
-            <Pagination
-              value={activePage}
-              onChange={setActivePage}
-              total={pagination.totalPages}
+        {}
+        <Stack gap="lg">
+          <Group gap="md">
+            <TextInput
+              placeholder="Search payment methods by name or type..."
+              leftSection={<FiSearch size={18} color="#666" />}
+              size="md"
+              radius="xl"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setActivePage(1);
+              }}
+              style={{ flex: 1 }}
+              styles={{ input: { background: '#f8f9fa', border: '1px solid #eee' } }}
+            />
+            <Select
+              placeholder="Filter by Type"
+              size="md"
+              radius="xl"
+              data={[
+                { value: "all", label: "All Types" },
+                { value: "upi", label: "UPI" },
+                { value: "bank", label: "Bank Transfer" },
+              ]}
+              value={typeFilter}
+              onChange={(value) => {
+                setTypeFilter(value || "all");
+                setActivePage(1);
+              }}
+              styles={{ input: { background: '#f8f9fa', border: '1px solid #eee' } }}
+              clearable
             />
           </Group>
-        )}
+
+          <Table.ScrollContainer minWidth={800}>
+            <Table verticalSpacing="md" horizontalSpacing="md">
+              <Table.Thead bg="#f8f9fa">
+                <Table.Tr>
+                  <Table.Th style={{ borderRadius: '16px 0 0 0' }} ta="center">METHOD</Table.Th>
+                  <Table.Th ta="center">DETAILS</Table.Th>
+                  <Table.Th ta="center">STATUS</Table.Th>
+                  <Table.Th ta="center">CREATED</Table.Th>
+                  <Table.Th style={{ borderRadius: '0 16px 0 0' }} ta="center">ACTIONS</Table.Th>
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>
+                {isLoading ? (
+                  <Table.Tr>
+                    <Table.Td colSpan={5}>
+                      <Flex justify="center" direction="column" align="center" py={100}>
+                        <Loader size="lg" color="blue" />
+                        <Text c="dimmed" mt="md" fw={700}>Loading Payment Methods...</Text>
+                      </Flex>
+                    </Table.Td>
+                  </Table.Tr>
+                ) : rows.length > 0 ? (
+                  rows
+                ) : (
+                  <Table.Tr>
+                    <Table.Td colSpan={5}>
+                      <Flex justify="center" direction="column" align="center" py={100}>
+                        <ThemeIcon size={64} radius="xl" variant="light" color="gray"><FiSearch size={32} /></ThemeIcon>
+                        <Text c="dimmed" mt="md" fw={700}>No payment methods found.</Text>
+                      </Flex>
+                    </Table.Td>
+                  </Table.Tr>
+                )}
+              </Table.Tbody>
+            </Table>
+          </Table.ScrollContainer>
+
+          <Flex justify="space-between" align="center" mt="xl" px="md">
+            <Text size="sm" c="dimmed" fw={600}>
+              Showing <Text span fw={800} c="blue.9">{rows.length}</Text> payment methods in the current view
+            </Text>
+            <Pagination
+              total={pagination.totalPages || 1}
+              value={activePage}
+              onChange={setActivePage}
+              radius="xl"
+              color="blue"
+              size="sm"
+            />
+          </Flex>
+        </Stack>
       </Paper>
 
-      {/* Create Modal */}
+      {}
       <Modal
         opened={createModal}
         onClose={() => setCreateModal(false)}
@@ -461,14 +486,23 @@ const PaymentMethodManagement = () => {
                 }
                 required
               />
-              <TextInput
-                label="QR Code URL (Optional)"
-                placeholder="Enter QR code image URL"
-                value={formData.qrCode}
-                onChange={(e) =>
-                  setFormData({ ...formData, qrCode: e.target.value })
-                }
-              />
+              <div>
+                <Text size="sm" fw={600} mb={6}>Upload QR Code (Optional)</Text>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files && e.target.files[0];
+                    setFormData((s) => ({ ...s, qrCode: file || null }));
+                  }}
+                />
+                {formData.qrCode && typeof formData.qrCode === 'string' && (
+                  <img src={formData.qrCode} alt="qr-preview" style={{ maxWidth: 200, marginTop: 8 }} />
+                )}
+                {formData.qrCode && formData.qrCode instanceof File && (
+                  <img src={URL.createObjectURL(formData.qrCode)} alt="qr-preview" style={{ maxWidth: 200, marginTop: 8 }} />
+                )}
+              </div>
             </>
           ) : (
             <>
@@ -533,7 +567,7 @@ const PaymentMethodManagement = () => {
         </Flex>
       </Modal>
 
-      {/* Edit Modal */}
+      {}
       <Modal
         opened={editModal}
         onClose={() => setEditModal(false)}
@@ -562,13 +596,23 @@ const PaymentMethodManagement = () => {
                   }
                   required
                 />
-                <TextInput
-                  label="QR Code URL"
-                  value={formData.qrCode}
-                  onChange={(e) =>
-                    setFormData({ ...formData, qrCode: e.target.value })
-                  }
-                />
+                <div>
+                  <Text size="sm" fw={600} mb={6}>Upload QR Code (Optional)</Text>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files && e.target.files[0];
+                      setFormData((s) => ({ ...s, qrCode: file || null }));
+                    }}
+                  />
+                  {formData.qrCode && typeof formData.qrCode === 'string' && (
+                    <img src={formData.qrCode} alt="qr-preview" style={{ maxWidth: 200, marginTop: 8 }} />
+                  )}
+                  {formData.qrCode && formData.qrCode instanceof File && (
+                    <img src={URL.createObjectURL(formData.qrCode)} alt="qr-preview" style={{ maxWidth: 200, marginTop: 8 }} />
+                  )}
+                </div>
               </>
             ) : (
               <>
@@ -639,7 +683,7 @@ const PaymentMethodManagement = () => {
         )}
       </Modal>
 
-      {/* Delete Modal */}
+      {}
       <Modal
         opened={deleteModal}
         onClose={() => setDeleteModal(false)}

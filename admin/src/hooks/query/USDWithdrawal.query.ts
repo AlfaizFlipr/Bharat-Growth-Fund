@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { usdWithdrawalUrls, userUrls } from "../api-urls/api.url";
 import { request } from "../../lib/axios.config";
 
-// ==================== Types ====================
+
 
 interface USDWithdrawalFilters {
   page?: number;
@@ -32,9 +32,9 @@ interface RejectUSDWithdrawalPayload {
   reason: string;
 }
 
-// ==================== Fetch Queries ====================
 
-// ✅ Get all USD withdrawals with filters
+
+
 const fetchAllUSDWithdrawals = async (filters: USDWithdrawalFilters) => {
   const params = new URLSearchParams();
 
@@ -52,7 +52,7 @@ const fetchAllUSDWithdrawals = async (filters: USDWithdrawalFilters) => {
   return response.data;
 };
 
-// ✅ Get USD wallet for a user
+
 const fetchUSDWalletByUser = async (userId: string) => {
   const response = await request({
     url: userUrls.GET_USD_WALLET(userId),
@@ -62,9 +62,9 @@ const fetchUSDWalletByUser = async (userId: string) => {
   return response.data;
 };
 
-// ==================== Mutations ====================
 
-// ✅ Toggle USD user status
+
+
 const toggleUSDUserStatus = async ({ userId, isUSDUser }: ToggleUSDUserPayload) => {
   const response = await request({
     url: userUrls.TOGGLE_USD_USER(userId),
@@ -75,7 +75,7 @@ const toggleUSDUserStatus = async ({ userId, isUSDUser }: ToggleUSDUserPayload) 
   return response.data;
 };
 
-// ✅ Fund USD wallet
+
 const fundUSDWallet = async ({ userId, amountINR, description }: FundUSDWalletPayload) => {
   const response = await request({
     url: userUrls.FUND_USD_WALLET(userId),
@@ -86,7 +86,7 @@ const fundUSDWallet = async ({ userId, amountINR, description }: FundUSDWalletPa
   return response.data;
 };
 
-// ✅ Approve USD withdrawal
+
 const approveUSDWithdrawal = async ({ withdrawalId, remarks }: ApproveUSDWithdrawalPayload) => {
   const response = await request({
     url: usdWithdrawalUrls.APPROVE_USD_WITHDRAWAL(withdrawalId),
@@ -97,7 +97,7 @@ const approveUSDWithdrawal = async ({ withdrawalId, remarks }: ApproveUSDWithdra
   return response.data;
 };
 
-// ✅ Reject USD withdrawal
+
 const rejectUSDWithdrawal = async ({ withdrawalId, reason }: RejectUSDWithdrawalPayload) => {
   const response = await request({
     url: usdWithdrawalUrls.REJECT_USD_WITHDRAWAL(withdrawalId),
@@ -108,17 +108,17 @@ const rejectUSDWithdrawal = async ({ withdrawalId, reason }: RejectUSDWithdrawal
   return response.data;
 };
 
-// ==================== React Query Hooks ====================
 
-// ✅ Fetch All USD Withdrawals
+
+
 export const useAllUSDWithdrawals = (filters: USDWithdrawalFilters) =>
   useQuery({
     queryKey: ["admin-usd-withdrawals", filters],
     queryFn: () => fetchAllUSDWithdrawals(filters),
-    staleTime: 30 * 1000, // 30s
+    staleTime: 30 * 1000, 
   });
 
-// ✅ Fetch USD Wallet for User
+
 export const useUSDWalletByUser = (userId: string) =>
   useQuery({
     queryKey: ["admin-usd-wallet", userId],
@@ -126,7 +126,7 @@ export const useUSDWalletByUser = (userId: string) =>
     enabled: !!userId,
   });
 
-// ✅ Toggle USD User Status Mutation
+
 export const useToggleUSDUser = () => {
   const queryClient = useQueryClient();
 
@@ -139,7 +139,7 @@ export const useToggleUSDUser = () => {
   });
 };
 
-// ✅ Fund USD Wallet Mutation
+
 export const useFundUSDWallet = () => {
   const queryClient = useQueryClient();
 
@@ -152,7 +152,7 @@ export const useFundUSDWallet = () => {
   });
 };
 
-// ✅ Approve USD Withdrawal Mutation
+
 export const useApproveUSDWithdrawal = () => {
   const queryClient = useQueryClient();
 
@@ -164,7 +164,7 @@ export const useApproveUSDWithdrawal = () => {
   });
 };
 
-// ✅ Reject USD Withdrawal Mutation
+
 export const useRejectUSDWithdrawal = () => {
   const queryClient = useQueryClient();
 
@@ -176,9 +176,9 @@ export const useRejectUSDWithdrawal = () => {
   });
 };
 
-// ==================== Withdrawal Settings ====================
 
-// Fetch withdrawal settings
+
+
 const fetchWithdrawalSettings = async () => {
   const response = await request({
     url: usdWithdrawalUrls.GET_SETTINGS,
@@ -194,7 +194,7 @@ export const useWithdrawalSettings = () =>
     staleTime: 60 * 1000,
   });
 
-// Update withdrawal settings
+
 interface UpdateSettingsPayload {
   stripeEnabled?: boolean;
   bitgetEnabled?: boolean;
@@ -233,7 +233,7 @@ export const useUpdateWithdrawalSettings = () => {
   });
 };
 
-// Test Bitget connection
+
 const testBitgetConnection = async () => {
   const response = await request({
     url: usdWithdrawalUrls.TEST_BITGET,
@@ -248,16 +248,16 @@ export const useTestBitgetConnection = () => {
   });
 };
 
-// Fetch Bitget Balance (uses test-bitget endpoint)
+
 export const useBitgetBalance = () =>
   useQuery({
     queryKey: ["bitget-balance"],
     queryFn: testBitgetConnection,
-    staleTime: 30 * 1000, // 30s
-    refetchInterval: 60 * 1000, // Refresh every minute
+    staleTime: 30 * 1000, 
+    refetchInterval: 60 * 1000, 
   });
 
-// Check Bitget withdrawal status
+
 const checkBitgetStatus = async (withdrawalId: string) => {
   const response = await request({
     url: usdWithdrawalUrls.BITGET_STATUS(withdrawalId),

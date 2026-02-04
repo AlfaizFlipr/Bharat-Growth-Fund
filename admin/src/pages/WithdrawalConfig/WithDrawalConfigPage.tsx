@@ -9,12 +9,10 @@ import {
   Group,
   Card,
   Badge,
-  Loader,
+  Stack,
+  Center,
   Alert,
   Grid,
-  Center,
-  Stack,
-  Title,
 } from "@mantine/core";
 import {
   FiCheckCircle,
@@ -26,6 +24,8 @@ import {
   useWithdrawalConfigs,
   useBulkUpdateConfigs,
 } from "../../hooks/query/Withdrawal.query";
+import { useAllLevels } from "../../hooks/query/level.query";
+import { Loader } from "lucide-react";
 
 interface ConfigType {
   _id?: string;
@@ -113,25 +113,36 @@ const WithdrawalConfigPage = () => {
     { value: "6", label: "Apple Level 6" },
   ];
 
-  // Load configs safely from API
+  const { data: levelsData } = useAllLevels({ page: 1, limit: 100, isActive: true });
+  const fetchedLevels = levelsData?.levels || [];
+
+  const dynamicLevelOptions =
+    fetchedLevels.length > 0
+      ? fetchedLevels.map((l: any) => ({
+          value: String(l.levelNumber),
+          label: l.levelName || `Level ${l.levelNumber}`,
+        }))
+      : levelOptions;
+
+  
   useEffect(() => {
     if (data?.configs && Array.isArray(data.configs)) {
-      // Ensure each config has required fields
+      
       const normalized = DEFAULT_CONFIGS.map((day) => {
         const found = data.configs.find(
           (c: ConfigType) => c.dayOfWeek === day.dayOfWeek
         );
         return found
           ? {
-              ...day,
-              ...found,
-              allowedLevels: found.allowedLevels || [],
-            }
+            ...day,
+            ...found,
+            allowedLevels: found.allowedLevels || [],
+          }
           : day;
       });
       setConfigs(normalized);
     } else {
-      // fallback to default if API empty
+      
       setConfigs(DEFAULT_CONFIGS);
     }
   }, [data]);
@@ -192,11 +203,11 @@ const WithdrawalConfigPage = () => {
 
   return (
     <Flex direction="column" gap="xl" p="xl" bg="gray.0">
-      {/* Header */}
-      <Paper p="lg" shadow="sm" withBorder>
+      {}
+      <Paper p="md" shadow="sm" withBorder radius="md">
         <Group justify="space-between" mb="md">
           <div>
-            <Title order={3}>Withdrawal Configuration</Title>
+            <Text size="xl" fw={900} style={{ color: '#0f2027', letterSpacing: '-0.5px' }}>Withdrawal Configuration</Text>
             <Text size="sm" c="dimmed">
               Configure which levels can withdraw on each day.
             </Text>
@@ -209,6 +220,8 @@ const WithdrawalConfigPage = () => {
               onClick={handleSave}
               loading={bulkUpdateMutation.isPending}
               disabled={!hasChanges}
+              color="#0f2027"
+              radius="xl"
             >
               Save All
             </Button>
@@ -216,7 +229,7 @@ const WithdrawalConfigPage = () => {
         </Group>
       </Paper>
 
-      {/* Config Cards */}
+      {}
       <Paper p="lg" shadow="xs" withBorder>
         <Grid gutter="lg">
           {configs.map((config) => (
@@ -226,9 +239,8 @@ const WithdrawalConfigPage = () => {
                 shadow="sm"
                 radius="md"
                 style={{
-                  borderLeft: `4px solid ${
-                    config.isActive ? "#40c057" : "#fa5252"
-                  }`,
+                  borderLeft: `4px solid ${config.isActive ? "#40c057" : "#fa5252"
+                    }`,
                 }}
               >
                 <Stack gap="md">
@@ -259,8 +271,8 @@ const WithdrawalConfigPage = () => {
                   {config.isActive && (
                     <>
                       <MultiSelect
-                        label="Allowed Apple Levels"
-                        data={levelOptions}
+                        label="Allowed Levels"
+                        data={dynamicLevelOptions}
                         value={config.allowedLevels.map(String)}
                         onChange={(values) =>
                           updateConfig(

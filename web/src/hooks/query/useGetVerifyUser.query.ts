@@ -1,4 +1,4 @@
-// hooks/useVerifyUserQuery.ts
+
 import { useQuery } from "@tanstack/react-query";
 import { authUrls } from "../api-urls/api.url";
 import { request } from "../../lib/axios.config";
@@ -20,14 +20,15 @@ interface UserResponse {
   todayTasksCompleted: number;
   userLevel: number;
   levelName: string;
+  dailyIncome?: number;
   isActive: boolean;
-  isUSDUser:boolean;
+  isUSDUser: boolean;
   isVerified: boolean;
   referralCode?: string;
   totalReferrals: number;
-  teamLevel:string;
-  currentLevel:string;
-  currentLevelNumber:number;
+  teamLevel: string;
+  currentLevel: string;
+  currentLevelNumber: number;
 }
 
 interface TServerResponse {
@@ -63,8 +64,8 @@ export const useVerifyUserQuery = () => {
     queryKey: ["verifyUser"],
     queryFn: () => verifyUser(),
     retry: false,
-    staleTime: 1000 * 60, // 1 minute for fresher wallet/stats data
-    refetchOnMount: true, // Refetch when component mounts
-    refetchOnWindowFocus: true, // Refetch when window regains focus
+    staleTime: 1000 * 60, 
+    refetchOnMount: true, 
+    refetchOnWindowFocus: true, 
   });
 };

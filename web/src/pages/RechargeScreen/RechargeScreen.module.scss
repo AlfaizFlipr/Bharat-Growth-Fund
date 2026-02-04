@@ -1,64 +1,85 @@
-// RechargeScreen.module.scss
-.container {
-  max-width: 600px;
-  margin: 0 auto;
-  padding: 20px;
-  min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-
-  @media (max-width: 768px) {
-    padding: 16px;
-  }
-}
-
-.title {
-  font-size: 28px;
-  font-weight: 700;
-  margin-bottom: 24px;
-  text-align: center;
-  color: #1a1a1a;
-
-  @media (max-width: 768px) {
-    font-size: 24px;
-    margin-bottom: 20px;
-  }
-}
-
 .card {
   background: white;
-  margin-bottom: 16px;
+  margin-bottom: 24px;
+  border-radius: 24px;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.02);
+  border: 1px solid #f1f5f9;
   transition: all 0.3s ease;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
-  }
 }
 
-.amountBtn {
+.amountGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.amountCard {
+  background: #f8fafc;
+  border: 1.5px solid #f1f5f9;
+  border-radius: 16px;
+  padding: 18px 10px;
+  text-align: center;
+  cursor: pointer;
   transition: all 0.2s ease;
 
   &:hover {
-    transform: scale(1.05);
+    background-color: #f1f5f9;
+    transform: translateY(-2px);
+    border-color: #3182ce;
   }
+}
 
-  &:active {
-    transform: scale(0.98);
+.amountSelected {
+  background-color: #3182ce;
+  border-color: #1e3a8a;
+  color: white;
+  box-shadow: 0 8px 16px rgba(49, 130, 206, 0.2);
+
+  p,
+  span,
+  div {
+    color: white !important;
   }
 }
 
 .paymentCard {
-  transition: all 0.3s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
+  border-radius: 20px;
+  border: 1px solid #f1f5f9;
+  background: white;
 
   &:hover {
-    transform: translateX(4px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-color: #3182ce;
+    background-color: #f0f7ff;
+    transform: scale(1.01);
   }
 }
 
 .activeCard {
-  background: linear-gradient(135deg, #e7f5ff 0%, #d0ebff 100%);
-  border-color: #228be6 !important;
-  border-width: 2px !important;
+  background-color: rgba(49, 130, 206, 0.05);
+  border-color: #3182ce !important;
+  border-width: 1.5px !important;
+  box-shadow: 0 4px 12px rgba(49, 130, 206, 0.08);
+}
+
+.qrContainer {
+  background: white;
+  padding: 16px;
+  border-radius: 24px;
+  border: 2px solid #3182ce;
+  box-shadow: 0 12px 24px rgba(49, 130, 206, 0.1);
+  display: inline-block;
+}
+
+.stepIcon {
+  transition: all 0.3s ease;
+}
+
+.detailRow {
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #f1f5f9;
 }

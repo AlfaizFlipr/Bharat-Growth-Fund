@@ -1,4 +1,4 @@
-// controllers/rechargeControllers/recharge.controller.ts - COMPLETE VERSION
+
 import { Request, Response, NextFunction } from "express";
 import commonsUtils from "../../utils";
 import QRCode from 'qrcode';
@@ -6,9 +6,9 @@ import models from "../../models";
 
 const { JsonResponse } = commonsUtils;
 
-// ==================== USER ENDPOINTS ====================
 
-// Get wallet info (USER)
+
+
 export const getWalletInfo = async (
   req: Request,
   res: Response,
@@ -51,7 +51,7 @@ export const getWalletInfo = async (
   }
 };
 
-// Get payment methods (USER)
+
 export const getPaymentMethods = async (
   req: Request,
   res: Response,
@@ -82,7 +82,7 @@ export const getPaymentMethods = async (
   }
 };
 
-// Create recharge order (USER)
+
 export const createRechargeOrder = async (req: Request, res: Response) => {
   try {
     const { amount, paymentMethodId } = req.body;
@@ -98,7 +98,7 @@ export const createRechargeOrder = async (req: Request, res: Response) => {
 
     let dynamicQRCode = null;
     if (paymentMethod.methodType === "upi" && paymentMethod.upiId) {
-      const upiString = `upi://pay?pa=${paymentMethod.upiId}&pn=${encodeURIComponent(
+      const upiString = `upi:
         paymentMethod.accountName || "Merchant"
       )}&am=${amount}&cu=INR&tn=${encodeURIComponent(
         `Order-${Date.now()}`
@@ -147,7 +147,7 @@ export const createRechargeOrder = async (req: Request, res: Response) => {
   }
 };
 
-// Generate UPI QR Code (USER)
+
 export const generateUPIQRCode = async (req: Request, res: Response) => {
   try {
     const { amount, paymentMethodId } = req.body;
@@ -164,7 +164,7 @@ export const generateUPIQRCode = async (req: Request, res: Response) => {
     let qrCodeData = "";
 
     if (paymentMethod.methodType === "upi" && paymentMethod.upiId) {
-      const upiString = `upi://pay?pa=${paymentMethod.upiId}&pn=${encodeURIComponent(
+      const upiString = `upi:
         paymentMethod.accountName || "Merchant"
       )}&am=${amount}&cu=INR&tn=${encodeURIComponent(
         `Recharge Order ${Date.now()}`
@@ -205,7 +205,7 @@ export const generateUPIQRCode = async (req: Request, res: Response) => {
   }
 };
 
-// Verify payment and complete recharge (USER)
+
 export const verifyRechargePayment = async (
   req: Request,
   res: Response,
@@ -295,7 +295,7 @@ export const verifyRechargePayment = async (
   }
 };
 
-// Get recharge history (USER)
+
 export const getRechargeHistory = async (
   req: Request,
   res: Response,
@@ -348,9 +348,9 @@ export const getRechargeHistory = async (
   }
 };
 
-// ==================== ADMIN ENDPOINTS ====================
 
-// Get all recharges (ADMIN)
+
+
 export const getAllRecharges = async (
   req: Request,
   res: Response,
@@ -368,7 +368,7 @@ export const getAllRecharges = async (
     const limitNum = parseInt(limit as string);
     const skip = (pageNum - 1) * limitNum;
 
-    // Build filter
+    
     const filter: any = {};
 
     if (status && status !== "all") {
@@ -449,7 +449,7 @@ export const getAllRecharges = async (
   }
 };
 
-// Get recharge statistics (ADMIN)
+
 export const getRechargeStatistics = async (
   req: Request,
   res: Response,
@@ -467,7 +467,8 @@ export const getRechargeStatistics = async (
     ]);
 
     const statistics = {
-      totalAmount: stats.reduce((acc, curr) => acc + curr.totalAmount, 0),
+      totalAmount: stats.find(s => s._id === 'completed')?.totalAmount || 0,
+      pendingAmount: stats.find(s => s._id === 'pending')?.totalAmount || 0,
       pendingCount: stats.find(s => s._id === 'pending')?.count || 0,
       processingCount: stats.find(s => s._id === 'processing')?.count || 0,
       completedCount: stats.find(s => s._id === 'completed')?.count || 0,
@@ -540,13 +541,26 @@ export const approveRecharge = async (
       });
     }
 
-    user.mainWallet = (user.mainWallet || 0) + rechargeOrder.amount;
+    const previousBalance = user.mainWallet || 0;
+    user.mainWallet = previousBalance + rechargeOrder.amount;
+    user.totalRecharges = (user.totalRecharges || 0) + rechargeOrder.amount;
     await user.save();
 
     rechargeOrder.status = "completed";
     rechargeOrder.approvedAt = new Date();
     rechargeOrder.remarks = remarks || "Payment verified and approved by admin";
     await rechargeOrder.save();
+
+    
+    await models.transaction.create({
+      userId: user._id,
+      amount: rechargeOrder.amount,
+      type: 'RECHARGE',
+      status: 'SUCCESS',
+      description: `Recharge of ₹${rechargeOrder.amount} approved`,
+      balanceBefore: previousBalance,
+      balanceAfter: user.mainWallet
+    });
 
     return JsonResponse(res, {
       status: "success",
@@ -598,7 +612,7 @@ export const rejectRecharge = async (
       });
     }
 
-    const rechargeOrder = await models.recharge.findById(orderId);
+    const rechargeOrder = await models.recharge.findOne({ orderId });
 
     if (!rechargeOrder) {
       return JsonResponse(res, {
@@ -660,7 +674,7 @@ export const rejectRecharge = async (
 };
 
 export default {
-  // User endpoints
+  
   getWalletInfo,
   getPaymentMethods,
   createRechargeOrder,
@@ -668,7 +682,7 @@ export default {
   generateUPIQRCode,
   getRechargeHistory,
   
-  // Admin endpoints
+  
   getAllRecharges,
   getRechargeStatistics,
   approveRecharge,

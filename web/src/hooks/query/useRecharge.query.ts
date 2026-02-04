@@ -1,10 +1,10 @@
-// hooks/query/useRecharge.query.ts
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { notifications } from "@mantine/notifications";
 import { request } from "../../lib/axios.config";
 import { rechargeUrls } from "../api-urls/api.url";
 
-// Get Wallet Info
+
 export const getWalletInfo = async () => {
   const response = await request({
     url: rechargeUrls.WALLET_INFO,
@@ -18,12 +18,12 @@ export const useWalletInfoQuery = () => {
     queryKey: ["walletInfo"],
     queryFn: getWalletInfo,
     refetchOnWindowFocus: false,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 5, 
     retry: 2,
   });
 };
 
-// Get Payment Methods
+
 export const getPaymentMethods = async () => {
   const response = await request({
     url: rechargeUrls.PAYMENT_METHODS,
@@ -37,12 +37,12 @@ export const usePaymentMethodsQuery = () => {
     queryKey: ["paymentMethods"],
     queryFn: getPaymentMethods,
     refetchOnWindowFocus: false,
-    staleTime: 1000 * 60 * 10, // 10 minutes
+    staleTime: 1000 * 60 * 10, 
     retry: 2,
   });
 };
 
-// Create Recharge Order
+
 interface CreateRechargeOrderPayload {
   amount: number;
   paymentMethodId: string;
@@ -77,9 +77,9 @@ export const useCreateRechargeOrderMutation = () => {
   });
 };
 
-// hooks/query/useRecharge.query.ts
 
-// Add new hook for generating QR code
+
+
 interface GenerateQRPayload {
   amount: number;
   paymentMethodId: string;
@@ -108,7 +108,7 @@ export const useGenerateQRMutation = () => {
   });
 };
 
-// Verify Recharge Payment
+
 const verifyRechargePayment = async (formData: FormData) => {
   const response = await request({
     url: rechargeUrls.VERIFY_PAYMENT,
@@ -148,7 +148,7 @@ export const useVerifyRechargePaymentMutation = () => {
   });
 };
 
-// Get Recharge History
+
 interface RechargeHistoryParams {
   page?: number;
   limit?: number;
@@ -169,12 +169,12 @@ export const useRechargeHistoryQuery = (params: RechargeHistoryParams = {}) => {
     queryKey: ["rechargeHistory", params],
     queryFn: () => getRechargeHistory(params),
     refetchOnWindowFocus: false,
-    staleTime: 1000 * 60 * 2, // 2 minutes
+    staleTime: 1000 * 60 * 2, 
     retry: 2,
   });
 };
 
-// Admin: Approve Recharge
+
 interface ApproveRechargePayload {
   orderId: string;
   remarks?: string;
@@ -216,7 +216,7 @@ export const useApproveRechargeMutation = () => {
   });
 };
 
-// Admin: Reject Recharge
+
 interface RejectRechargePayload {
   orderId: string;
   remarks?: string;

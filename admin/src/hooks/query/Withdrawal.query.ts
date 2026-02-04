@@ -63,8 +63,11 @@ export const useApproveWithdrawal = () => {
           },
         })
       ).data,
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["withdrawals"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["withdrawals"] });
+      queryClient.invalidateQueries({ queryKey: ["withdrawal-statistics"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboardStats"] });
+    },
   });
 };
 
@@ -81,8 +84,10 @@ export const useRejectWithdrawal = () => {
           },
         })
       ).data,
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["withdrawals"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["withdrawals"] });
+      queryClient.invalidateQueries({ queryKey: ["withdrawal-statistics"] });
+    },
   });
 };
 
@@ -104,7 +109,7 @@ interface UpdateConfigPayload {
   config: Omit<ConfigType, "dayName" | "dayOfWeek">;
 }
 
-// ✅ Fetch all configs
+
 const getWithdrawalConfigs = async () => {
   const response = await request({
     url: withdrawalUrls.WITHDRAWAL_CONFIGS,
@@ -122,7 +127,7 @@ export const useWithdrawalConfigs = () => {
   });
 };
 
-// ✅ Update single config
+
 const updateWithdrawalConfig = async (payload: UpdateConfigPayload) => {
   const response = await request({
     url: withdrawalUrls.UPDATE_WITHDRAWAL_CONFIG(payload.dayOfWeek),
@@ -156,7 +161,7 @@ export const useUpdateWithdrawalConfig = () => {
   });
 };
 
-// ✅ Bulk update configs
+
 const bulkUpdateConfigs = async (payload: BulkUpdatePayload) => {
   const response = await request({
     url: withdrawalUrls.BULK_UPDATE_CONFIGS,

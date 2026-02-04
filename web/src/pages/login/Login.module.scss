@@ -3,7 +3,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(180deg, #1a1a3e 0%, #2d1b4e 50%, #1a1a3e 100%);
+  background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
   padding: 1.5rem;
   box-sizing: border-box;
 }
@@ -11,23 +11,23 @@
 .paper {
   width: 100%;
   max-width: 400px;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 16px;
-  padding: 2rem;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 2.5rem;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
   color: #fff;
 
   @media (max-width: 600px) {
-    padding: 1.2rem;
+    padding: 1.5rem;
     max-width: 90%;
   }
 }
 .label {
   display: flex;
   margin-bottom: 6px;
-  color: #e0e0e0;
+  color: #a0aec0;
   font-size: 14px;
 }
 
@@ -35,33 +35,36 @@
   color: #fff;
   text-align: center;
   font-weight: 700;
-  letter-spacing: 0.5px;
-  margin-bottom: 1.5rem;
+  letter-spacing: 1px;
 }
 
 .link {
   cursor: pointer;
-  color: #fff;
+  color: #63b3ed;
   text-align: center;
   display: block;
-  margin-top: 1rem;
+  margin-top: 1.5rem;
   font-size: 14px;
+  font-weight: 500;
 
   &:hover {
     text-decoration: underline;
+    color: #4299e1;
   }
 }
 
-
 .loginButton {
   font-weight: 600;
-  background-color: #1a1a3e !important;
+  background-color: #38a169 !important; 
   color: #fff !important;
-  border-radius: 10px;
-  transition: 0.2s ease;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  height: 48px;
 
   &:hover {
-    background-color: #1a1a3e !important;
+    background-color: #2f855a !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(56, 161, 105, 0.3);
   }
 }
 @media (max-width: 480px) {

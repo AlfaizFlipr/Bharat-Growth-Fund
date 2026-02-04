@@ -10,23 +10,30 @@ import {
   NumberInput,
   Select,
   Alert,
-  Card,
   Badge,
   Divider,
-  Grid,
   Loader,
   ThemeIcon,
-  Tooltip,
   PasswordInput,
+  Stack,
+  Title,
+  Box,
+  SimpleGrid,
 } from "@mantine/core";
 import {
-  FiSettings,
-  FiDollarSign,
-  FiCheckCircle,
-  FiXCircle,
-  FiAlertCircle,
-  FiRefreshCw,
-} from "react-icons/fi";
+  DollarSign,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  RefreshCw,
+  ShieldCheck,
+  TrendingUp,
+  Globe,
+  Save,
+  Lock,
+  Key,
+  Database,
+} from "lucide-react";
 import { RiExchangeFundsLine } from "react-icons/ri";
 import { FaStripe } from "react-icons/fa";
 import { notifications } from "@mantine/notifications";
@@ -36,6 +43,7 @@ import {
   useTestBitgetConnection,
 } from "../../hooks/query/USDWithdrawal.query";
 import classes from "./index.module.scss";
+import Heading from "../../@ui/common/Heading";
 
 const WithdrawalSettings = () => {
   const { data, isLoading } = useWithdrawalSettings();
@@ -86,7 +94,6 @@ const WithdrawalSettings = () => {
   const handleSaveSettings = async () => {
     try {
       const payload: any = { ...formData };
-      // Only send API keys if they were entered
       if (!payload.bitgetApiKey) delete payload.bitgetApiKey;
       if (!payload.bitgetSecretKey) delete payload.bitgetSecretKey;
       if (!payload.bitgetPassphrase) delete payload.bitgetPassphrase;
@@ -94,16 +101,16 @@ const WithdrawalSettings = () => {
       await updateSettingsMutation.mutateAsync(payload);
       notifications.show({
         title: "Success",
-        message: "Withdrawal settings updated successfully!",
+        message: "Institutional configurations committed to secure storage.",
         color: "green",
-        icon: <FiCheckCircle />,
+        icon: <CheckCircle size={18} />,
       });
     } catch (error: any) {
       notifications.show({
-        title: "Error",
-        message: error.response?.data?.message || "Failed to update settings",
+        title: "Registry Error",
+        message: error.response?.data?.message || "Critical failure during configuration commit.",
         color: "red",
-        icon: <FiXCircle />,
+        icon: <XCircle size={18} />,
       });
     }
   };
@@ -116,360 +123,309 @@ const WithdrawalSettings = () => {
         setBitgetBalance(`${result.balance.free} ${result.currency}`);
       }
       notifications.show({
-        title: "Bitget Connected",
-        message: `Connection successful! Balance: ${result.balance?.free || 0} ${result.currency}`,
+        title: "Node Synchronized",
+        message: `Secure handshake established. Liquid balance detected.`,
         color: "teal",
-        icon: <FiCheckCircle />,
+        icon: <CheckCircle size={18} />,
       });
     } catch (error: any) {
       setBitgetConnected(false);
       notifications.show({
-        title: "Connection Failed",
-        message: error.response?.data?.message || "Failed to connect to Bitget",
+        title: "Handshake Failure",
+        message: error.response?.data?.message || "Bitget API rejected synchronization request.",
         color: "red",
-        icon: <FiXCircle />,
+        icon: <XCircle size={18} />,
       });
     }
   };
 
   if (isLoading) {
     return (
-      <Flex justify="center" align="center" style={{ height: "400px" }}>
-        <Loader size="lg" />
+      <Flex justify="center" direction="column" align="center" style={{ height: "400px" }}>
+        <Loader size="lg" color="blue" />
+        <Text c="dimmed" mt="md" fw={700}>Synchronizing Control Grid...</Text>
       </Flex>
     );
   }
 
   return (
-    <Flex direction="column" gap="md" className={classes.container}>
-      <Paper p="md" shadow="xs" className={classes.header}>
-        <Group justify="space-between">
-          <Flex gap="xs" direction="column" align="flex-start">
-            <Text size="xl" fw={700} className={classes.title}>
-              <FiSettings style={{ marginRight: 8 }} />
-              USD Withdrawal Settings
-            </Text>
-            <Text size="sm" c="dimmed">
-              Configure Stripe and Bitget withdrawal methods
-            </Text>
-          </Flex>
-          <Button
-            onClick={handleSaveSettings}
-            loading={updateSettingsMutation.isPending}
-            leftSection={<FiCheckCircle />}
-            color="green"
-          >
-            Save Settings
-          </Button>
-        </Group>
-      </Paper>
+    <Box p="xl" className={classes.container} bg="#fdfdfd" style={{ minHeight: '100vh' }}>
+      <Stack gap="xl">
+        <Box>
+          <Badge variant="light" color="blue" radius="sm" mb="xs">CONTROL LAYER v2.0</Badge>
+          <Group justify="space-between">
+            <Box>
+              <Heading order={1} fw={900} style={{ letterSpacing: "-1px" }}>Institutional Config</Heading>
+              <Text c="dimmed" size="sm" fw={500}>Configure encryption keys, liquidity conduits, and fiscal thresholds for the international treasury.</Text>
+            </Box>
+            <Button
+              onClick={handleSaveSettings}
+              loading={updateSettingsMutation.isPending}
+              leftSection={<Save size={16} />}
+              bg="blue.9"
+              radius="xl"
+              size="md"
+              styles={{ root: { boxShadow: '0 4px 15px rgba(30, 58, 138, 0.2)' } }}
+            >
+              Commit Changes
+            </Button>
+          </Group>
+        </Box>
 
-      <Grid>
-        {/* Withdrawal Methods */}
-        <Grid.Col span={{ base: 12, md: 6 }}>
-          <Card withBorder p="lg">
-            <Text size="lg" fw={600} mb="md">
-              Payment Methods
-            </Text>
+        <SimpleGrid cols={{ base: 1, md: 2 }} spacing="xl">
+          {}
+          <Stack gap="lg">
+            <Paper p="xl" radius="32px" withBorder shadow="0 10px 40px rgba(0,0,0,0.02)">
+              <Group gap="sm" mb="xl">
+                <ThemeIcon variant="light" color="blue" size={40} radius="md">
+                  <Globe size={20} />
+                </ThemeIcon>
+                  <Heading order={3} fw={900}>Liquidity Conduits</Heading>
+              </Group>
 
-            {/* Stripe */}
-            <Paper withBorder p="md" mb="md" bg={formData.stripeEnabled ? "blue.0" : "gray.0"}>
-              <Group justify="space-between" mb="sm">
-                <Group>
-                  <ThemeIcon size={40} color="violet" variant="light">
-                    <FaStripe size={24} />
-                  </ThemeIcon>
-                  <div>
-                    <Text fw={600}>Stripe</Text>
-                    <Text size="xs" c="dimmed">Bank transfer withdrawals</Text>
-                  </div>
-                </Group>
-                <Switch
-                  checked={formData.stripeEnabled}
-                  onChange={(e) =>
-                    setFormData({ ...formData, stripeEnabled: e.target.checked })
-                  }
-                  color="violet"
+              <Stack gap="md">
+                {}
+                <Paper p="lg" radius="20px" withBorder bg={formData.stripeEnabled ? "indigo.0" : "gray.0"} style={{ borderColor: formData.stripeEnabled ? '#c3dafe' : '#eee' }}>
+                  <Group justify="space-between">
+                    <Group>
+                      <ThemeIcon size={44} radius="lg" bg="indigo" variant="filled">
+                        <FaStripe size={24} color="#fff" />
+                      </ThemeIcon>
+                      <Box>
+                        <Text fw={800} size="sm">STRIPE CORE</Text>
+                        <Text size="xs" c="dimmed" fw={600}>Direct Bank Infrastructure</Text>
+                      </Box>
+                    </Group>
+                    <Switch
+                      checked={formData.stripeEnabled}
+                      onChange={(e) => setFormData({ ...formData, stripeEnabled: e.target.checked })}
+                      color="indigo"
+                      size="md"
+                    />
+                  </Group>
+                </Paper>
+
+                {}
+                <Paper p="lg" radius="20px" withBorder bg={formData.bitgetEnabled ? "teal.0" : "gray.0"} style={{ borderColor: formData.bitgetEnabled ? '#b2f5ea' : '#eee' }}>
+                  <Group justify="space-between">
+                    <Group>
+                      <ThemeIcon size={44} radius="lg" bg="#00D4AA" variant="filled">
+                        <RiExchangeFundsLine size={24} color="#fff" />
+                      </ThemeIcon>
+                      <Box>
+                        <Text fw={800} size="sm">BITGET PRO</Text>
+                        <Text size="xs" c="dimmed" fw={600}>USDT Crypto Infrastructure</Text>
+                      </Box>
+                    </Group>
+                    <Switch
+                      checked={formData.bitgetEnabled}
+                      onChange={(e) => setFormData({ ...formData, bitgetEnabled: e.target.checked })}
+                      color="teal"
+                      size="md"
+                    />
+                  </Group>
+                  {(bitgetConnected !== null || bitgetBalance) && (
+                    <Group mt="sm" gap={6}>
+                      {bitgetConnected !== null && (
+                        <Badge color={bitgetConnected ? "emerald" : "red"} size="xs" variant="filled" radius="xs" fw={800}>
+                          {bitgetConnected ? "SYNCHRONIZED" : "HANDSHAKE FAILED"}
+                        </Badge>
+                      )}
+                      {bitgetBalance && (
+                        <Badge color="blue" variant="light" size="xs" radius="xs" fw={800}>
+                          RESERVE: {bitgetBalance}
+                        </Badge>
+                      )}
+                    </Group>
+                  )}
+                </Paper>
+
+                <Divider my="md" label="Ingress Priority" labelPosition="center" />
+
+                <Select
+                  label="PRIMARY SETTLEMENT METHOD"
+                  description="Automatic routing for non-specified requisitions"
+                  value={formData.defaultWithdrawalMethod}
+                  onChange={(value) => setFormData({ ...formData, defaultWithdrawalMethod: value as "stripe" | "bitget" })}
+                  data={[
+                    { value: "bitget", label: "BITGET (Crypto Conduit)" },
+                    { value: "stripe", label: "STRIPE (Legacy Banking)" },
+                  ]}
+                  radius="md"
                   size="md"
                 />
-              </Group>
-              <Badge color={formData.stripeEnabled ? "green" : "gray"}>
-                {formData.stripeEnabled ? "Enabled" : "Disabled"}
-              </Badge>
+              </Stack>
             </Paper>
 
-            {/* Bitget */}
-            <Paper withBorder p="md" bg={formData.bitgetEnabled ? "teal.0" : "gray.0"}>
-              <Group justify="space-between" mb="sm">
-                <Group>
-                  <ThemeIcon size={40} color="teal" variant="light">
-                    <RiExchangeFundsLine size={24} />
-                  </ThemeIcon>
-                  <div>
-                    <Text fw={600}>Bitget</Text>
-                    <Text size="xs" c="dimmed">Crypto USDT withdrawals</Text>
-                  </div>
-                </Group>
-                <Switch
-                  checked={formData.bitgetEnabled}
-                  onChange={(e) =>
-                    setFormData({ ...formData, bitgetEnabled: e.target.checked })
-                  }
-                  color="teal"
-                  size="md"
+            {}
+            <Paper p="xl" radius="32px" withBorder shadow="0 10px 40px rgba(0,0,0,0.02)">
+              <Group gap="sm" mb="xl">
+                <ThemeIcon variant="light" color="indigo" size={40} radius="md">
+                  <DollarSign size={20} />
+                </ThemeIcon>
+                <Heading order={3} fw={900}>Fiscal Thresholds</Heading>
+              </Group>
+
+              <Stack gap="md">
+                <NumberInput
+                  label="MINIMUM REQUISITION (INR)"
+                  description="Minimum allowable unit transfer"
+                  value={formData.minWithdrawalINR}
+                  onChange={(value) => setFormData({ ...formData, minWithdrawalINR: Number(value) || 0.01 })}
+                  radius="md"
+                  prefix="₹"
+                  fw={700}
                 />
-              </Group>
-              <Group>
-                <Badge color={formData.bitgetEnabled ? "green" : "gray"}>
-                  {formData.bitgetEnabled ? "Enabled" : "Disabled"}
-                </Badge>
-                {bitgetConnected !== null && (
-                  <Badge color={bitgetConnected ? "green" : "red"}>
-                    {bitgetConnected ? "Connected" : "Disconnected"}
-                  </Badge>
-                )}
-                {bitgetBalance && (
-                  <Badge color="blue" variant="light">
-                    Balance: {bitgetBalance}
-                  </Badge>
-                )}
-              </Group>
+                <NumberInput
+                  label="MAXIMUM REQUISITION (INR)"
+                  description="Maximum institutional ceiling"
+                  value={formData.maxWithdrawalINR}
+                  onChange={(value) => setFormData({ ...formData, maxWithdrawalINR: Number(value) || 500000 })}
+                  radius="md"
+                  prefix="₹"
+                  fw={700}
+                />
+                <NumberInput
+                  label="INSTITUTIONAL SPOT RATE"
+                  description="Current 1 USD valuation in INR"
+                  value={formData.usdExchangeRate}
+                  onChange={(value) => setFormData({ ...formData, usdExchangeRate: Number(value) || 83 })}
+                  radius="md"
+                  decimalScale={2}
+                  prefix="₹"
+                  fw={900}
+                  c="blue.9"
+                />
+              </Stack>
             </Paper>
+          </Stack>
 
-            <Divider my="md" />
-
-            {/* Default Method */}
-            <Select
-              label="Default Withdrawal Method"
-              description="Method used when user doesn't specify"
-              value={formData.defaultWithdrawalMethod}
-              onChange={(value) =>
-                setFormData({
-                  ...formData,
-                  defaultWithdrawalMethod: value as "stripe" | "bitget",
-                })
-              }
-              data={[
-                { value: "bitget", label: "Bitget (Crypto)" },
-                { value: "stripe", label: "Stripe (Bank Transfer)" },
-              ]}
-            />
-          </Card>
-        </Grid.Col>
-
-        {/* Bitget Configuration */}
-        <Grid.Col span={{ base: 12, md: 6 }}>
-          <Card withBorder p="lg">
-            <Group justify="space-between" mb="md">
-              <Text size="lg" fw={600}>
-                <RiExchangeFundsLine style={{ marginRight: 8 }} />
-                Bitget Configuration
-              </Text>
-              <Tooltip label="Test connection">
+          {}
+          <Stack gap="lg">
+            <Paper p="xl" radius="32px" withBorder shadow="0 10px 40px rgba(0,0,0,0.02)">
+              <Group justify="space-between" mb="xl">
+                <Group gap="sm">
+                  <ThemeIcon variant="light" color="teal" size={40} radius="md">
+                    <Database size={20} />
+                  </ThemeIcon>
+                  <Heading order={3} fw={900}>Interface Encryption</Heading>
+                </Group>
                 <Button
                   variant="light"
                   color="teal"
                   size="xs"
+                  radius="xl"
                   onClick={handleTestBitget}
                   loading={testBitgetMutation.isPending}
-                  leftSection={<FiRefreshCw size={14} />}
+                  leftSection={<RefreshCw size={14} />}
                 >
-                  Test Connection
+                  Sync Nodes
                 </Button>
-              </Tooltip>
-            </Group>
+              </Group>
 
-            <Alert icon={<FiAlertCircle />} color="teal" variant="light" mb="md">
-              <Text size="xs">
-                API keys are stored securely. Leave blank to keep existing keys.
-              </Text>
-            </Alert>
+              <Alert icon={<ShieldCheck size={18} />} color="teal" variant="light" radius="lg" mb="xl">
+                <Text size="xs" fw={700}>RSA-4096 Storage: Credentials are encrypted and stored in institutional vaults. Field updates override existing keys.</Text>
+              </Alert>
 
-            <PasswordInput
-              label="API Key"
-              placeholder={data?.settings?.bitgetApiKeyConfigured ? "••••••••••••" : "Enter API Key"}
-              value={formData.bitgetApiKey}
-              onChange={(e) =>
-                setFormData({ ...formData, bitgetApiKey: e.target.value })
-              }
-              mb="sm"
-            />
-
-            <PasswordInput
-              label="Secret Key"
-              placeholder={data?.settings?.bitgetApiKeyConfigured ? "••••••••••••" : "Enter Secret Key"}
-              value={formData.bitgetSecretKey}
-              onChange={(e) =>
-                setFormData({ ...formData, bitgetSecretKey: e.target.value })
-              }
-              mb="sm"
-            />
-
-            <PasswordInput
-              label="Passphrase"
-              placeholder={data?.settings?.bitgetApiKeyConfigured ? "••••••••••••" : "Enter Passphrase"}
-              value={formData.bitgetPassphrase}
-              onChange={(e) =>
-                setFormData({ ...formData, bitgetPassphrase: e.target.value })
-              }
-              mb="sm"
-            />
-
-            <Grid>
-              <Grid.Col span={6}>
-                <Select
-                  label="Network"
-                  value={formData.bitgetNetwork}
-                  onChange={(value) =>
-                    setFormData({ ...formData, bitgetNetwork: value || "trc20" })
-                  }
-                  data={[
-                    { value: "trc20", label: "Tron (TRC20)" },
-                    { value: "bep20", label: "BSC (BEP20)" },
-                    { value: "erc20", label: "Ethereum (ERC20)" },
-                    { value: "matic", label: "Polygon" },
-                    { value: "sol", label: "Solana" },
-                  ]}
+              <Stack gap="md">
+                <PasswordInput
+                  label="API IDENTIFIER"
+                  placeholder={data?.settings?.bitgetApiKeyConfigured ? "SECURED IN VAULT" : "Input API Requisitioner ID"}
+                  value={formData.bitgetApiKey}
+                  onChange={(e) => setFormData({ ...formData, bitgetApiKey: e.target.value })}
+                  radius="md"
+                  leftSection={<Key size={14} />}
                 />
-              </Grid.Col>
-              <Grid.Col span={6}>
-                <Select
-                  label="Currency"
-                  value={formData.bitgetCurrency}
-                  onChange={(value) =>
-                    setFormData({ ...formData, bitgetCurrency: value || "USDT" })
-                  }
-                  data={[
-                    { value: "USDT", label: "USDT" },
-                    { value: "USDC", label: "USDC" },
-                  ]}
+                <PasswordInput
+                  label="PRIVATE SIGNING KEY"
+                  placeholder={data?.settings?.bitgetApiKeyConfigured ? "SECURED IN VAULT" : "Input Primary Secret"}
+                  value={formData.bitgetSecretKey}
+                  onChange={(e) => setFormData({ ...formData, bitgetSecretKey: e.target.value })}
+                  radius="md"
+                  leftSection={<Lock size={14} />}
                 />
-              </Grid.Col>
-            </Grid>
-          </Card>
-        </Grid.Col>
+                <PasswordInput
+                  label="VAULT PASSPHRASE"
+                  placeholder={data?.settings?.bitgetApiKeyConfigured ? "SECURED IN VAULT" : "Input Access Code"}
+                  value={formData.bitgetPassphrase}
+                  onChange={(e) => setFormData({ ...formData, bitgetPassphrase: e.target.value })}
+                  radius="md"
+                  leftSection={<ShieldCheck size={14} />}
+                />
 
-        {/* Withdrawal Limits & Fees */}
-        <Grid.Col span={{ base: 12, md: 6 }}>
-          <Card withBorder p="lg">
-            <Text size="lg" fw={600} mb="md">
-              <FiDollarSign style={{ marginRight: 8 }} />
-              Withdrawal Limits
-            </Text>
+                <SimpleGrid cols={2}>
+                  <Select
+                    label="NETWORK PROTOCOL"
+                    value={formData.bitgetNetwork}
+                    onChange={(value) => setFormData({ ...formData, bitgetNetwork: value || "trc20" })}
+                    data={[
+                      { value: "trc20", label: "TRON (TRC20)" },
+                      { value: "bep20", label: "BSC (BEP20)" },
+                      { value: "erc20", label: "ETH (ERC20)" },
+                      { value: "matic", label: "POLYGON" },
+                    ]}
+                    radius="md"
+                  />
+                  <Select
+                    label="ASSET CURRENCY"
+                    value={formData.bitgetCurrency}
+                    onChange={(value) => setFormData({ ...formData, bitgetCurrency: value || "USDT" })}
+                    data={[
+                      { value: "USDT", label: "USDT-CORE" },
+                      { value: "USDC", label: "USDC-STABLE" },
+                    ]}
+                    radius="md"
+                  />
+                </SimpleGrid>
+              </Stack>
+            </Paper>
 
-            <NumberInput
-              label="Minimum Withdrawal (INR)"
-              value={formData.minWithdrawalINR}
-              onChange={(value) =>
-                setFormData({ ...formData, minWithdrawalINR: Number(value) || 0.01 })
-              }
-              min={100}
-              step={100}
-              prefix="₹"
-              thousandSeparator=","
-              mb="sm"
-            />
+            <Paper p="xl" radius="32px" withBorder shadow="0 10px 40px rgba(0,0,0,0.02)">
+              <Group gap="sm" mb="xl">
+                <ThemeIcon variant="light" color="orange" size={40} radius="md">
+                  <TrendingUp size={20} />
+                </ThemeIcon>
+                <Heading order={3} fw={900}>Surcharge Algorithms</Heading>
+              </Group>
 
-            <NumberInput
-              label="Maximum Withdrawal (INR)"
-              value={formData.maxWithdrawalINR}
-              onChange={(value) =>
-                setFormData({ ...formData, maxWithdrawalINR: Number(value) || 500000 })
-              }
-              min={1000}
-              step={1000}
-              prefix="₹"
-              thousandSeparator=","
-              mb="sm"
-            />
+              <Stack gap="md">
+                <NumberInput
+                  label="STRIPE ADMINISTRATIVE SURCHARGE (%)"
+                  value={formData.stripeFeePercent}
+                  onChange={(value) => setFormData({ ...formData, stripeFeePercent: Number(value) || 2.9 })}
+                  radius="md"
+                  suffix="%"
+                  decimalScale={2}
+                  fw={700}
+                />
+                <NumberInput
+                  label="BITGET TRANSMISSION SURCHARGE (%)"
+                  value={formData.bitgetFeePercent}
+                  onChange={(value) => setFormData({ ...formData, bitgetFeePercent: Number(value) || 0.1 })}
+                  radius="md"
+                  suffix="%"
+                  decimalScale={2}
+                  fw={700}
+                />
+                <Alert icon={<AlertCircle size={16} />} color="blue" variant="light" radius="md">
+                  <Text size="xs" fw={700}>Note: Blockchain network fees (~$1-5) are volatile and handled by the protocol layer during transmission.</Text>
+                </Alert>
+              </Stack>
+            </Paper>
 
-            <NumberInput
-              label="USD Exchange Rate (1 USD = X INR)"
-              value={formData.usdExchangeRate}
-              onChange={(value) =>
-                setFormData({ ...formData, usdExchangeRate: Number(value) || 83 })
-              }
-              min={1}
-              step={0.1}
-              decimalScale={2}
-              prefix="₹"
-            />
-          </Card>
-        </Grid.Col>
-
-        {/* Fees */}
-        <Grid.Col span={{ base: 12, md: 6 }}>
-          <Card withBorder p="lg">
-            <Text size="lg" fw={600} mb="md">
-              Withdrawal Fees
-            </Text>
-
-            <NumberInput
-              label="Stripe Fee (%)"
-              description="Fee percentage for Stripe withdrawals"
-              value={formData.stripeFeePercent}
-              onChange={(value) =>
-                setFormData({ ...formData, stripeFeePercent: Number(value) || 2.9 })
-              }
-              min={0}
-              max={100}
-              step={0.1}
-              decimalScale={2}
-              suffix="%"
-              mb="sm"
-            />
-
-            <NumberInput
-              label="Bitget Fee (%)"
-              description="Fee percentage for Bitget withdrawals"
-              value={formData.bitgetFeePercent}
-              onChange={(value) =>
-                setFormData({ ...formData, bitgetFeePercent: Number(value) || 0.1 })
-              }
-              min={0}
-              max={100}
-              step={0.1}
-              decimalScale={2}
-              suffix="%"
-            />
-
-            <Alert icon={<FiAlertCircle />} color="blue" variant="light" mt="md">
-              <Text size="xs">
-                Note: Bitget also charges network fees which vary by blockchain.
-                TRC20 has the lowest fees (~$1).
-              </Text>
-            </Alert>
-          </Card>
-        </Grid.Col>
-
-        {/* Notes */}
-        <Grid.Col span={12}>
-          <Card withBorder p="lg">
-            <TextInput
-              label="Admin Notes"
-              description="Internal notes about withdrawal configuration"
-              placeholder="Add any notes here..."
-              value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-            />
-          </Card>
-        </Grid.Col>
-      </Grid>
-
-      {/* Current Status */}
-      <Alert
-        icon={formData.bitgetEnabled ? <RiExchangeFundsLine /> : <FaStripe />}
-        color={formData.bitgetEnabled ? "teal" : "violet"}
-        title="Current Active Method"
-      >
-        <Text size="sm">
-          <strong>{formData.bitgetEnabled ? "Bitget (Crypto)" : "Stripe (Bank Transfer)"}</strong> is currently the primary withdrawal method.
-          {formData.bitgetEnabled && (
-            <> Users will receive <strong>{formData.bitgetCurrency}</strong> on <strong>{formData.bitgetNetwork}</strong> network.</>
-          )}
-        </Text>
-      </Alert>
-    </Flex>
+            <Paper p="xl" radius="32px" withBorder shadow="0 10px 40px rgba(0,0,0,0.02)">
+              <TextInput
+                label="TREASURY DIRECTIVE (INTERNAL MEMO)"
+                placeholder="Record operational changes or maintenance windows..."
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                radius="md"
+              />
+            </Paper>
+          </Stack>
+        </SimpleGrid>
+      </Stack>
+    </Box>
   );
 };
 

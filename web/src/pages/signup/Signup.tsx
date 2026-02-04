@@ -1,5 +1,5 @@
-// src/screens/Signup.tsx
-import React, { useEffect, useState } from "react";
+
+import React, { useState } from "react";
 import {
   TextInput,
   PasswordInput,
@@ -9,7 +9,7 @@ import {
   Paper,
   Title,
 } from "@mantine/core";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { showNotification } from "@mantine/notifications";
 import { useSignupMutation } from "../../hooks/mutations/useSignup.mutation";
 import { useAppDispatch } from "../../store/hooks";
@@ -21,25 +21,16 @@ import { useVerifyUserQuery } from "../../hooks/query/useGetVerifyUser.query";
 const Signup: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const [searchParams] = useSearchParams();
 
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
     password: "",
     confirmPassword: "",
-    referralCode: "",
   });
 
   const { mutate: signup, isPending: signingUp } = useSignupMutation();
   const { refetch } = useVerifyUserQuery();
-
-  useEffect(() => {
-    const refCode = searchParams.get('ref');
-    if (refCode) {
-      setFormData(prev => ({ ...prev, referralCode: refCode }));
-    }
-  }, [searchParams]);
 
   const validateForm = () => {
     const { name, phone, password, confirmPassword } = formData;
@@ -86,14 +77,13 @@ const Signup: React.FC = () => {
   const handleSignup = () => {
     if (!validateForm()) return;
 
-    const { name, phone, password, referralCode } = formData;
+    const { name, phone, password } = formData;
 
     signup(
       {
         name,
         phone,
         password,
-        referralCode: referralCode.trim() || undefined
       },
       {
         onSuccess: async (res: any) => {
@@ -135,9 +125,12 @@ const Signup: React.FC = () => {
   return (
     <Flex justify="center" align="center" className={classes.container}>
       <Paper radius="md" p="xl" shadow="xl" className={classes.paper}>
-        <Title order={2} mb="lg" className={classes.title}>
-          Sign Up
+        <Title order={2} mb="xs" className={classes.title}>
+          Create Account
         </Title>
+        <Text ta="center" mb="lg" size="sm" c="dimmed">
+          Join Bharat Growth Fund today
+        </Text>
 
         <TextInput
           label="Name"

@@ -15,7 +15,7 @@ export default async (req: Request, res: Response, _: NextFunction) => {
       }
     }
 
-    // Delete token from database if exists
+    
     if (token) {
       try {
         await models.token.deleteOne({ token });
@@ -24,7 +24,7 @@ export default async (req: Request, res: Response, _: NextFunction) => {
       }
     }
 
-    // Clear cookie - IMPORTANT: Use same options as when setting
+    
     const isProduction = process.env.NODE_ENV === "production";
     
     const clearOptions: any = {
@@ -34,7 +34,7 @@ export default async (req: Request, res: Response, _: NextFunction) => {
       path: '/',
     };
 
-    // Match domain if it was set during login
+    
     const cookieDomain = process.env.COOKIE_DOMAIN;
     if (isProduction && cookieDomain && cookieDomain.trim() !== '') {
       const cleanDomain = cookieDomain.replace(/^https?:\/\//, '');
@@ -53,7 +53,7 @@ export default async (req: Request, res: Response, _: NextFunction) => {
     });
   } catch (err) {
     console.error('💥 Logout error:', err);
-    // Still clear cookie even if error
+    
     res.clearCookie('userAuth');
     
     return JsonResponse(res, {

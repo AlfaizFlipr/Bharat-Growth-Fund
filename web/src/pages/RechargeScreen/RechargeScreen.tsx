@@ -4,19 +4,22 @@ import {
   Text,
   Button,
   NumberInput,
-  Card,
   Loader,
   Radio,
-  Group,
   Divider,
   Alert,
   Image,
-  Progress,
-  Timeline,
   Stack,
   Paper,
   TextInput,
   Center,
+  Box,
+  Container,
+  ActionIcon,
+  ThemeIcon,
+  FileInput,
+  Badge,
+  Group,
 } from "@mantine/core";
 import {
   useWalletInfoQuery,
@@ -26,14 +29,19 @@ import {
 } from "../../hooks/query/useRecharge.query";
 import classes from "./RechargeScreen.module.scss";
 import {
-  FaInfoCircle,
-  FaWallet,
-  FaUniversity,
-  FaMobileAlt,
-  FaCheckCircle,
-  FaSpinner,
-  FaArrowRight,
-} from "react-icons/fa";
+  Wallet,
+  CheckCircle2,
+  ArrowRight,
+  ArrowLeft,
+  Coins,
+  Building2,
+  Info,
+  ShieldCheck,
+  QrCode,
+  Copy,
+  Zap,
+} from "lucide-react";
+import { notifications } from "@mantine/notifications";
 
 const RechargeStep = {
   SELECT_AMOUNT: 1,
@@ -58,7 +66,7 @@ const RechargeScreen: React.FC = () => {
   const [orderData, setOrderData] = useState<any>(null);
   const [dynamicQRCode, setDynamicQRCode] = useState<string | null>(null);
 
-  // Queries & Mutations
+  
   const {
     data: walletInfo,
     isLoading: walletLoading,
@@ -70,7 +78,7 @@ const RechargeScreen: React.FC = () => {
   const createOrderMutation = useCreateRechargeOrderMutation();
   const verifyPaymentMutation = useVerifyRechargePaymentMutation();
 
-  // Set default payment method
+  
   useEffect(() => {
     if (paymentMethods.length > 0 && !selectedPaymentMethod) {
       const activeMethod = paymentMethods.find((m: any) => m.isActive);
@@ -96,12 +104,12 @@ const RechargeScreen: React.FC = () => {
       { amount, paymentMethodId: selectedPaymentMethod },
       {
         onSuccess: (data) => {
-
-          if (data?.order) {
-            const order = data.order;
+          
+          const order = data?.order || data?.data?.order;
+          
+          if (order) {
             setPaymentDetails(order);
 
-            // ✅ Correct QR Code assignment
             if (order?.dynamicQRCode) {
               setDynamicQRCode(order.dynamicQRCode);
             } else if (order?.paymentDetails?.qrCode) {
@@ -139,7 +147,7 @@ const RechargeScreen: React.FC = () => {
   };
 
   const handleComplete = () => {
-    // Reset state
+    
     setCurrentStep(RechargeStep.SELECT_AMOUNT);
     setCustomAmount(undefined);
     setTransactionId("");
@@ -149,490 +157,478 @@ const RechargeScreen: React.FC = () => {
     setDynamicQRCode(null);
   };
 
+  const predefinedAmounts = [500, 1000, 2000, 5000, 10000, 50000];
+
+  const handleCopy = (val: string, label: string) => {
+    navigator.clipboard.writeText(val);
+    notifications.show({
+      title: "Copied!",
+      message: `${label} copied to clipboard`,
+      color: "blue",
+    });
+  };
+
   const renderStepIndicator = () => {
     const steps = [
       { step: RechargeStep.SELECT_AMOUNT, label: "Amount" },
-      { step: RechargeStep.SELECT_PAYMENT, label: "Payment" },
-      { step: RechargeStep.PAYMENT_DETAILS, label: "Details" },
-      { step: RechargeStep.SUBMIT_UTR, label: "Verify" },
-      { step: RechargeStep.SUCCESS, label: "Success" },
+      { step: RechargeStep.SELECT_PAYMENT, label: "Gateway" },
+      { step: RechargeStep.PAYMENT_DETAILS, label: "Transfer" },
+      { step: RechargeStep.SUBMIT_UTR, label: "Confirm" },
     ];
 
-    const currentStepIndex = steps.findIndex((s) => s.step === currentStep);
-    const progress = ((currentStepIndex + 1) / steps.length) * 100;
-
     return (
-      <Card shadow="sm" p="md" radius="md" mb="lg">
-        <Progress value={progress} color="2d1b4e" size="sm" mb="xs" />
-        <Flex justify="space-between">
-          {steps.map((s) => (
-            <Text
-              key={s.step}
-              size="xs"
-              fw={currentStep >= s.step ? 600 : 400}
-              c={currentStep >= s.step ? "blue" : "dimmed"}
-            >
-              {s.label}
-            </Text>
-          ))}
-        </Flex>
-      </Card>
+      <Flex justify="space-between" style={{ position: 'relative' }}>
+        {}
+        <Box
+          style={{
+            position: 'absolute',
+            top: '18px',
+            left: '10%',
+            right: '10%',
+            height: '2px',
+            background: '#e2e8f0',
+            zIndex: 0
+          }}
+        />
+        {steps.map((s, idx) => {
+          const isCompleted = currentStep > s.step;
+          const isActive = currentStep === s.step;
+
+          return (
+            <Flex key={s.step} direction="column" align="center" style={{ flex: 1, position: 'relative', zIndex: 1 }}>
+              <ThemeIcon
+                size={36}
+                radius="xl"
+                color={isCompleted || isActive ? "blue" : "gray.3"}
+                variant={isCompleted || isActive ? "filled" : "light"}
+                className={classes.stepIcon}
+                style={{
+                  boxShadow: isActive ? '0 0 15px rgba(49, 130, 206, 0.4)' : 'none',
+                  border: isActive ? '2px solid white' : 'none'
+                }}
+              >
+                {isCompleted ? <CheckCircle2 size={18} /> :
+                  <Text size="sm" fw={900}>{idx + 1}</Text>}
+              </ThemeIcon>
+              <Text
+                size="10px"
+                mt={6}
+                fw={isActive ? 800 : 600}
+                c={isActive ? "blue.8" : "dimmed"}
+                style={{ textTransform: 'uppercase', letterSpacing: 0.5 }}
+              >
+                {s.label}
+              </Text>
+            </Flex>
+          );
+        })}
+      </Flex>
     );
   };
 
   const renderAmountSelection = () => (
-    <>
-      <Card shadow="sm" p="md" radius="md" mb="md">
-        <Text fw={600} mb="xs">
-          Current Balance
-        </Text>
-        <Group>
-          <div>
-            <Text size="xs" c="dimmed">
-              prime wallet
-            </Text>
-            <Text size="xl" fw={700} c="blue">
-              ₹{walletInfo?.mainWallet?.toFixed(2) || 0}
-            </Text>
-          </div>
-          <div>
-            <Text size="xs" c="dimmed">
-              Task Wallet
-            </Text>
-            <Text size="xl" fw={700} c="green">
-              ₹{walletInfo?.commissionWallet?.toFixed(2) || 0}
-            </Text>
-          </div>
-        </Group>
-      </Card>
+    <Stack gap="md">
+      <Paper radius="24px" p="xl" withBorder className={classes.card} bg="linear-gradient(135deg, #0f2027 0%, #203a43 100%)" shadow="md">
+        <Flex justify="space-between" align="center">
+          <Box>
+            <Text size="xs" c="blue.1" fw={800} style={{ letterSpacing: 1 }}>Main Wallet Amount</Text>
+            <Text size="32px" fw={900} c="white" style={{ letterSpacing: -1 }}>₹{walletInfo?.mainWallet?.toLocaleString() || "0.00"}</Text>
+          </Box>
+          <ThemeIcon size={54} radius="xl" color="rgba(255,255,255,0.1)">
+            <Wallet size={28} color="white" />
+          </ThemeIcon>
+        </Flex>
+      </Paper>
 
-      <Card shadow="sm" p="md" radius="md" mb="md">
-        <Text fw={600} mb="xs">
-          Enter Recharge Amount
-        </Text>
-        <Text size="xs" c="dimmed" mb="sm">
-          Enter any amount you want to recharge
-        </Text>
+      <Paper radius="32px" p="xl" withBorder className={classes.card}>
+        <Group justify="space-between" mb="lg">
+          <Text fw={900} size="lg" c="#1a365d">Amount</Text>
+          <Badge color="#203a43" variant="light" size="sm" radius="sm">INR GATEWAY</Badge>
+        </Group>
 
         <NumberInput
-          placeholder="Enter amount"
+          size="xl"
+          placeholder="Enter custom amount"
           value={customAmount}
           onChange={(val) => setCustomAmount(val as number)}
-          min={1}
-          step={100}
+          min={500}
           hideControls
-          leftSection={<Text fw={600}>₹</Text>}
+          leftSection={<Text fw={900} c="blue">₹</Text>}
+          radius="xl"
+          styles={{
+            input: {
+              fontSize: '24px',
+              fontWeight: 900,
+              height: '70px',
+              backgroundColor: '#f8fafc',
+              border: '2px solid #e2e8f0',
+            }
+          }}
         />
-      </Card>
+
+        <div className={classes.amountGrid}>
+          {predefinedAmounts.map((amt) => (
+            <div
+              key={amt}
+              className={`${classes.amountCard} ${customAmount === amt ? classes.amountSelected : ""}`}
+              onClick={() => setCustomAmount(amt)}
+            >
+              <Text fw={800} size="sm">₹{amt.toLocaleString()}</Text>
+            </div>
+          ))}
+        </div>
+
+        <Alert mt="xl" variant="light" color="#203a43" radius="lg" icon={<Info size={18} />}>
+          <Text size="xs" fw={600}>Minimum recharge amount: ₹500. Funds will be credited to your wallet post-verification.</Text>
+        </Alert>
+      </Paper>
 
       <Button
         fullWidth
+        size="lg"
+        radius="xl"
+        color="#203a43"
         onClick={handleAmountNext}
-        disabled={!getSelectedAmount() || getSelectedAmount() <= 0}
-        color="#2d1b4e"
-        rightSection={<FaArrowRight />}
+        disabled={!customAmount || customAmount < 500}
+        rightSection={<ArrowRight size={18} />}
+        style={{ height: 60, fontSize: 18, fontWeight: 900, boxShadow: '0 10px 20px rgba(49, 130, 206, 0.2)' }}
       >
-        {getSelectedAmount() > 0
-          ? `Continue - ₹${getSelectedAmount().toLocaleString()}`
-          : "Enter Amount to Continue"}
+        SELECT PAYMENT GATEWAY
       </Button>
-    </>
+    </Stack>
   );
 
   const renderPaymentMethodSelection = () => (
-    <>
-      <Card shadow="sm" p="md" radius="md" mb="md">
-        <Flex justify="space-between" align="center" mb="md">
-          <div>
-            <Text fw={600}>Selected Amount</Text>
-            <Text size="xl" fw={700} c="blue">
-              ₹{getSelectedAmount().toLocaleString()}
-            </Text>
-          </div>
-          <Button
-            variant="subtle"
-            size="xs"
+    <Stack gap="md">
+      <Paper radius="24px" p="lg" withBorder className={classes.card}>
+        <Flex justify="space-between" align="center">
+          <Box>
+            <Text size="xs" c="dimmed" fw={800} style={{ letterSpacing: 0.5 }}>RECHARGE AMOUNT</Text>
+            <Text size="22px" fw={900} c="blue.9">₹{customAmount?.toLocaleString()}</Text>
+          </Box>
+          <ActionIcon
+            variant="light"
+            color="#203a43"
+            size="lg"
+            radius="md"
             onClick={() => setCurrentStep(RechargeStep.SELECT_AMOUNT)}
-            color="#2d1b4e"
           >
-            Change
-          </Button>
+            <ArrowLeft size={20} />
+          </ActionIcon>
         </Flex>
-        <Divider />
-      </Card>
+      </Paper>
 
-      <Card shadow="sm" p="md" radius="md" mb="md">
-        <Text fw={600} mb="md">
-          Select Payment Method
-        </Text>
-
-        {paymentMethods.length === 0 ? (
-          <Alert color="2d1b4e" icon={<FaInfoCircle />}>
-            No payment methods available. Please contact support.
-          </Alert>
-        ) : (
-          <Radio.Group
-            value={selectedPaymentMethod}
-            onChange={setSelectedPaymentMethod}
-          >
-            <Stack gap="sm">
-              {paymentMethods
-                // 🔹 Filter out QR-based methods from UI
-                .filter(
-                  (method: any) =>
-                    method.methodType === "upi" || method.methodType === "bank"
-                )
-                .map((method: any) => (
-                  <Paper
-                    key={method._id}
-                    withBorder
-                    p="md"
-                    radius="md"
-                    style={{
-                      cursor: "pointer",
-                      borderColor:
-                        selectedPaymentMethod === method._id
-                          ? "#228be6"
-                          : undefined,
-                      borderWidth: selectedPaymentMethod === method._id ? 2 : 1,
-                    }}
-                    onClick={() => setSelectedPaymentMethod(method._id)}
-                  >
-                    <Radio
-                      value={method._id}
-                      label={
-                        <Flex align="center" gap="md">
-                          {method.methodType === "upi" && (
-                            <FaMobileAlt size={24} color="#228be6" />
-                          )}
-                          {method.methodType === "bank" && (
-                            <FaUniversity size={24} color="#228be6" />
-                          )}
-                          <div>
-                            <Text fw={600}>{method.methodName}</Text>
-                            <Text size="xs" c="dimmed">
-                              {method.methodType === "upi"
-                                ? "UPI Payment"
-                                : "Bank Transfer"}
-                            </Text>
-                          </div>
-                        </Flex>
-                      }
-                    />
-                  </Paper>
-                ))}
-            </Stack>
-          </Radio.Group>
-        )}
-      </Card>
-
-      <Group grow>
-        <Button
-          variant="outline"
-          color="#2d1b4e"
-          onClick={() => setCurrentStep(RechargeStep.SELECT_AMOUNT)}
-        >
-          Back
-        </Button>
-        <Button
-          onClick={handlePaymentMethodNext}
-          disabled={!selectedPaymentMethod}
-          color="#2d1b4e"
-          loading={createOrderMutation.isPending}
-          rightSection={<FaArrowRight />}
-        >
-          Proceed to Pay
-        </Button>
+      <Group justify="space-between" align="center" px="xs">
+        <Text fw={900} size="md" c="#1a365d">Payment Gateways</Text>
+        <ThemeIcon variant="subtle" color="#203a43">
+          <ShieldCheck size={18} />
+        </ThemeIcon>
       </Group>
-    </>
+
+      {paymentMethods.length === 0 ? (
+        <Alert color="#203a43" variant="light" icon={<Info size={18} />}>No active payment routes found.</Alert>
+      ) : (
+        <Stack gap="sm">
+          {paymentMethods
+            .filter((m: any) => m.isActive)
+            .map((method: any) => (
+              <Paper
+                key={method._id}
+                p="xl"
+                radius="24px"
+                withBorder
+                className={`${classes.paymentCard} ${selectedPaymentMethod === method._id ? classes.activeCard : ""}`}
+                onClick={() => setSelectedPaymentMethod(method._id)}
+              >
+                <Flex align="center" gap="lg">
+                  <ThemeIcon size={54} radius="xl" color="#203a43" variant="light">
+                    {method.methodType === 'usdt' ? <Coins size={28} /> : <Building2 size={28} />}
+                  </ThemeIcon>
+                  <Box style={{ flex: 1 }}>
+                    <Text fw={900} size="md">{method.methodName}</Text>
+                    <Text size="xs" c="dimmed" fw={600}>{method.description || 'Secure Payment Route'}</Text>
+                  </Box>
+                  <Radio
+                    checked={selectedPaymentMethod === method._id}
+                    color="#203a43"
+                    value={method._id}
+                    onChange={() => { }}
+                    styles={{ radio: { cursor: 'pointer' } }}
+                  />
+                </Flex>
+              </Paper>
+            ))}
+        </Stack>
+      )}
+
+      <Button
+        fullWidth
+        size="lg"
+        radius="xl"
+        color="#203a43"
+        mt="md"
+        loading={createOrderMutation.isPending}
+        onClick={handlePaymentMethodNext}
+        disabled={!selectedPaymentMethod}
+        style={{ height: 60, fontSize: 18, fontWeight: 900, boxShadow: '0 10px 20px rgba(49, 130, 206, 0.15)' }}
+        rightSection={<Zap size={18} />}
+      >
+        PROCEED TO PAY
+      </Button>
+    </Stack>
   );
 
   const renderPaymentDetails = () => {
-
     if (!paymentDetails) return null;
-
-    const method = paymentDetails.paymentDetails; // ✅ Corrected
-    console.log(method)
+    const method = paymentDetails.paymentDetails;
     const qrCodeToShow = dynamicQRCode || method?.qrCode;
 
-    // ✅ Check if QR code is base64 or URL
+    
     const getQRCodeSrc = (code: string) => {
       if (!code) return null;
-      if (code.startsWith("data:image")) return code; // already base64
-      if (code.startsWith("http")) return code; // hosted URL
-      // fallback — if backend returns raw base64 string
-      return `data:image/png;base64,${code}`;
+      if (code.startsWith("data:image")) return code;
+      if (code.startsWith("http")) return code;
+      return `${import.meta.env.VITE_PUBLIC_BASE_URL}/${code}`;
     };
 
     const qrCodeSrc = getQRCodeSrc(qrCodeToShow);
 
     return (
       <Stack gap="md">
-        <Alert color="2d1b4e" icon={<FaInfoCircle />}>
-          Complete the payment using the details below
-        </Alert>
+        <Paper radius="32px" p="xl" withBorder className={classes.card}>
+          <Stack align="center" mb="xl">
+            <Badge color="#203a43" size="lg" radius="sm">PAYMENT DETAILS</Badge>
+            <Text size="36px" fw={900} c="blue.9" style={{ letterSpacing: -1 }}>₹{paymentDetails.amount?.toLocaleString()}</Text>
+          </Stack>
 
-        {/* 🔹 Order Info */}
-        <Card withBorder p="md">
-          <Text size="sm" fw={600} mb="xs" c="dimmed">
-            ORDER DETAILS
-          </Text>
-          <Flex justify="space-between" mb="xs">
-            <Text size="sm" c="dimmed">
-              Order ID
-            </Text>
-            <Text size="sm" fw={500}>
-              {paymentDetails.orderId}
-            </Text>
-          </Flex>
-          <Flex justify="space-between">
-            <Text size="sm" c="dimmed">
-              Amount to Pay
-            </Text>
-            <Text size="xl" fw={700} c="blue">
-              ₹{paymentDetails.amount?.toLocaleString?.() || 0}
-            </Text>
-          </Flex>
-        </Card>
-
-        {/* 🔹 QR or Bank / UPI Info */}
-        <Card withBorder p="md">
-          <Text size="sm" fw={600} mb="md" c="dimmed">
-            PAYMENT DETAILS
-          </Text>
-
-          {/* ✅ Case 1: UPI / QR Payment */}
-          {method?.methodType === "upi" && qrCodeSrc ? (
-            <Flex justify="center" align="center" direction="column" gap="xs">
-              <Image
-                src={qrCodeSrc}
-                alt="Payment QR Code"
-                width={260}
-                height={260}
-                fit="contain"
-                style={{
-                  border: "2px solid #228be6",
-                  borderRadius: 8,
-                }}
-              />
-              {method?.upiId && (
-                <Text size="sm" mt="sm" fw={600}>
-                  UPI ID: <Text span c="blue">{method.upiId}</Text>
-                </Text>
-              )}
-              <Alert
-                color="green"
-                icon={<FaCheckCircle />}
-                style={{ width: "100%" }}
-              >
-                <Text size="sm" fw={500}>
-                  Amount: ₹{paymentDetails.amount?.toLocaleString?.() || 0}
-                </Text>
-                <Text size="xs" c="dimmed">
-                  Scan this QR code or use the UPI ID above to complete payment.
-                </Text>
-              </Alert>
+          {}
+          <Paper p="md" radius="lg" mb="lg" bg="#f8fafc" withBorder>
+            <Flex justify="space-between" mb="xs">
+              <Text size="xs" c="dimmed" fw={800}>ORDER ID</Text>
+              <Text size="sm" fw={700}>{paymentDetails.orderId}</Text>
             </Flex>
-          ) : method?.methodType === "bank" ? (
-            /* ✅ Case 2: Bank Transfer */
-            <Stack gap="xs">
-              <Flex justify="space-between">
-                <Text fw={500}>Account Holder:</Text>
-                <Text c="blue">{method?.accountName || "N/A"}</Text>
-              </Flex>
-              <Flex justify="space-between">
-                <Text fw={500}>Account Number:</Text>
-                <Text c="blue">{method?.accountNumber || "N/A"}</Text>
-              </Flex>
-              <Flex justify="space-between">
-                <Text fw={500}>Bank Name:</Text>
-                <Text c="blue">{method?.bankName || "N/A"}</Text>
-              </Flex>
-              <Flex justify="space-between">
-                <Text fw={500}>IFSC Code:</Text>
-                <Text c="blue">{method?.ifscCode || "N/A"}</Text>
-              </Flex>
+          </Paper>
 
-              <Alert color="green" icon={<FaCheckCircle />}>
-                <Text size="sm" fw={500}>
-                  Amount: ₹{paymentDetails.amount?.toLocaleString?.() || 0}
-                </Text>
-                <Text size="xs" c="dimmed">
-                  Use the above details to transfer via your banking app or net banking.
-                </Text>
-              </Alert>
+          {}
+          {method?.methodType === "upi" && qrCodeSrc ? (
+            <Center mb="xl">
+              <Box className={classes.qrContainer}>
+                <Image
+                  src={qrCodeSrc}
+                  w={220}
+                  h={220}
+                  fit="contain"
+                  style={{ border: "2px solid #228be6", borderRadius: 8 }}
+                />
+                <Flex justify="center" align="center" gap="xs" mt="md">
+                  <QrCode size={16} color="#3182ce" />
+                  <Text size="xs" fw={800} c="blue.7">SCAN VIA ANY UPI APP</Text>
+                </Flex>
+                {method?.upiId && (
+                  <Paper p="sm" mt="md" radius="md" bg="blue.0" withBorder style={{ borderColor: '#bee3f8' }}>
+                    <Flex justify="space-between" align="center">
+                      <Box>
+                        <Text size="10px" c="dimmed" fw={800}>UPI ID</Text>
+                        <Text fw={900} c="blue.8">{method.upiId}</Text>
+                      </Box>
+                      <ActionIcon variant="subtle" onClick={() => handleCopy(method.upiId, 'UPI ID')}><Copy size={16} /></ActionIcon>
+                    </Flex>
+                  </Paper>
+                )}
+              </Box>
+            </Center>
+          ) : method?.methodType === "bank" ? (
+            
+            <Stack gap="md" mb="xl">
+              <Box className={classes.detailRow}>
+                <Flex justify="space-between" align="center">
+                  <Box>
+                    <Text size="10px" c="dimmed" fw={800}>BANK NAME</Text>
+                    <Text fw={900}>{method?.bankName || "N/A"}</Text>
+                  </Box>
+                  <ActionIcon variant="subtle" onClick={() => handleCopy(method?.bankName || '', 'Bank Name')}><Copy size={16} /></ActionIcon>
+                </Flex>
+              </Box>
+
+              <Box className={classes.detailRow}>
+                <Flex justify="space-between" align="center">
+                  <Box>
+                    <Text size="10px" c="dimmed" fw={800}>ACCOUNT HOLDER</Text>
+                    <Text fw={900}>{method?.accountName || "N/A"}</Text>
+                  </Box>
+                  <ActionIcon variant="subtle" onClick={() => handleCopy(method?.accountName || '', 'Holder Name')}><Copy size={16} /></ActionIcon>
+                </Flex>
+              </Box>
+
+              <Box className={classes.detailRow}>
+                <Flex justify="space-between" align="center">
+                  <Box>
+                    <Text size="10px" c="dimmed" fw={800}>ACCOUNT NUMBER</Text>
+                    <Text fw={900} size="lg" style={{ letterSpacing: 1 }}>{method?.accountNumber || "N/A"}</Text>
+                  </Box>
+                  <ActionIcon variant="subtle" onClick={() => handleCopy(method?.accountNumber || '', 'Account Number')}><Copy size={16} /></ActionIcon>
+                </Flex>
+              </Box>
+
+              <Box className={classes.detailRow}>
+                <Flex justify="space-between" align="center">
+                  <Box>
+                    <Text size="10px" c="dimmed" fw={800}>IFSC ROUTING CODE</Text>
+                    <Text fw={900}>{method?.ifscCode || "N/A"}</Text>
+                  </Box>
+                  <ActionIcon variant="subtle" onClick={() => handleCopy(method?.ifscCode || '', 'IFSC Code')}><Copy size={16} /></ActionIcon>
+                </Flex>
+              </Box>
             </Stack>
           ) : (
-            /* Fallback: No Payment Info */
-            <Alert color="yellow" icon={<FaInfoCircle />}>
+            
+            <Alert color="yellow" icon={<Info size={18} />} mb="xl">
               Payment details not available for this method. Please contact support.
             </Alert>
           )}
-        </Card>
 
+          <Alert variant="light" color="#203a43" radius="xl" icon={<Info size={20} />}>
+            <Text size="xs" fw={600}>Transfer the exact amount, then click below to submit your transaction details.</Text>
+          </Alert>
+        </Paper>
 
-        {/* 🔹 Submit Section */}
-        <Alert color="orange" icon={<FaInfoCircle />}>
-          After completing the payment, click below to submit your transaction
-          details
-        </Alert>
-
-        <Flex gap={10}>
-          <Button
-            w="40%"
-            variant="outline"
-            size="md"
-            color="#2d1b4e"
-
-            onClick={() => setCurrentStep(RechargeStep.SELECT_PAYMENT)}
-          >
-            Back
-          </Button>
-          <Button
-            size="md"
-            onClick={handleProceedToUTR}
-            rightSection={<FaArrowRight />}
-            color="#2d1b4e"
-          >
-            I Have Completed Payment
-          </Button>
-        </Flex>
+        <Button
+          fullWidth
+          size="lg"
+          radius="xl"
+          color="#203a43"
+          style={{ height: 60, fontWeight: 900, boxShadow: '0 10px 20px rgba(49, 130, 206, 0.2)' }}
+          onClick={handleProceedToUTR}
+        >
+          I HAVE SENT THE MONEY
+        </Button>
+        <Button variant="subtle" color="gray" onClick={() => setCurrentStep(RechargeStep.SELECT_PAYMENT)}>
+          Cancel Recharge
+        </Button>
       </Stack>
     );
   };
 
   const renderUTRSubmission = () => (
     <Stack gap="md">
-      <Alert color="green" icon={<FaCheckCircle />}>
-        Payment Initiated Successfully!
-      </Alert>
-
-      <Card withBorder p="md">
-        <Text size="sm" fw={600} mb="md">
-          Enter Transaction Details
-        </Text>
+      <Paper radius="32px" p="xl" withBorder className={classes.card}>
+        <Stack align="center" mb="xl">
+          <Badge color="#203a43" size="lg" radius="sm">PAYMENT PROOF</Badge>
+          <Text fw={900} size="xl" c="#1a365d">Verify Transaction</Text>
+        </Stack>
 
         <TextInput
-          label="UTR / Transaction ID"
-          placeholder="Enter 12-digit UTR number"
+          label="Transaction Reference (UTR)"
+          placeholder="12-digit UTR Number"
+          size="lg"
+          radius="md"
           value={transactionId}
           onChange={(e) => setTransactionId(e.target.value)}
           required
-          mb="md"
+          mb="xl"
           description="Find this in your payment app under transaction details"
           error={
             transactionId && transactionId.length < 10
               ? "UTR must be at least 10 characters"
               : undefined
           }
+          styles={{
+            label: { fontWeight: 800, fontSize: '13px', marginBottom: '8px', color: '#4a5568' },
+            input: { backgroundColor: '#f8fafc', fontWeight: 700 }
+          }}
         />
 
-        <div>
-          <Text size="sm" fw={500} mb="xs">
-            Payment Proof (Optional)
-          </Text>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => {
-              if (e.target.files && e.target.files[0]) {
-                setPaymentProof(e.target.files[0]);
-              }
-            }}
-            style={{
-              width: "100%",
-              padding: "8px",
-              border: "1px solid #dee2e6",
-              borderRadius: "4px",
-            }}
-          />
-          {paymentProof && (
-            <Text size="xs" c="dimmed" mt="xs">
-              ✓ {paymentProof.name}
-            </Text>
-          )}
-        </div>
-      </Card>
+        <FileInput
+          label="Payment Screenshot"
+          placeholder="Upload screenshot"
+          accept="image/*"
+          size="lg"
+          radius="md"
+          value={paymentProof}
+          onChange={setPaymentProof}
+          mb="md"
+          styles={{
+            label: { fontWeight: 800, fontSize: '13px', marginBottom: '8px', color: '#4a5568' },
+            input: { backgroundColor: '#f8fafc' }
+          }}
+          leftSection={<QrCode size={18} />}
+        />
+        {paymentProof && (
+          <Paper p="xs" radius="md" bg="blue.0" withBorder style={{ borderColor: '#bee3f8' }}>
+            <Flex align="center" gap="xs">
+              <CheckCircle2 size={14} color="#3182ce" />
+              <Text size="xs" fw={700} c="blue.8">{paymentProof.name}</Text>
+            </Flex>
+          </Paper>
+        )}
+      </Paper>
 
-      <Alert color="2d1b4e" icon={<FaInfoCircle />}>
-        Your recharge will be processed within 5-10 minutes after verification
-      </Alert>
-
-      <Group grow>
-        <Button
-          variant="outline"
-          onClick={() => setCurrentStep(RechargeStep.PAYMENT_DETAILS)}
-          color="#2d1b4e"
-
-        >
-          Back
-        </Button>
-        <Button
-          onClick={handleSubmitUTR}
-          disabled={!transactionId || transactionId.length < 10}
-          loading={verifyPaymentMutation.isPending}
-          color="#2d1b4e"
-
-        >
-          Submit for Verification
-        </Button>
-      </Group>
+      <Button
+        fullWidth
+        size="lg"
+        radius="xl"
+        color="#203a43"
+        loading={verifyPaymentMutation.isPending}
+        disabled={!transactionId || transactionId.length < 10}
+        onClick={handleSubmitUTR}
+        style={{ height: 60, fontSize: 18, fontWeight: 900, boxShadow: '0 10px 20px rgba(49, 130, 206, 0.2)' }}
+      >
+        SUBMIT VERIFICATION
+      </Button>
+      <Button variant="subtle" color="gray" onClick={() => setCurrentStep(RechargeStep.PAYMENT_DETAILS)}>
+        Modify Transfer Info
+      </Button>
     </Stack>
   );
 
   const renderSuccess = () => (
-    <Stack gap="md" align="center">
-      <div style={{ textAlign: "center" }}>
-        <FaCheckCircle size={64} color="#51cf66" />
-        <Text size="xl" fw={700} mt="md">
-          Payment Submitted Successfully!
-        </Text>
-        <Text size="sm" c="dimmed" mt="xs">
-          Your recharge is being processed
-        </Text>
-      </div>
+    <Stack gap="xl" align="center" py="xl">
+      <ThemeIcon size={100} radius="xl" color="#203a43" variant="light" style={{ background: 'rgba(49, 130, 206, 0.1)' }}>
+        <ShieldCheck size={54} color="#3182ce" />
+      </ThemeIcon>
 
-      <Card withBorder p="md" w="100%">
-        <Timeline active={2} bulletSize={24} lineWidth={2}>
-          <Timeline.Item
-            bullet={<FaCheckCircle size={12} />}
-            title="Payment Initiated"
-          >
-            <Text size="xs" c="dimmed">
-              Order #{paymentDetails?.orderId}
-            </Text>
-          </Timeline.Item>
-          <Timeline.Item
-            bullet={<FaSpinner size={12} />}
-            title="Under Verification"
-          >
-            <Text size="xs" c="dimmed">
-              Processing your payment
-            </Text>
-          </Timeline.Item>
-          <Timeline.Item
-            bullet={<FaWallet size={12} />}
-            title="Amount will be credited"
-          >
-            <Text size="xs" c="dimmed">
-              After Admin Approval
-            </Text>
-          </Timeline.Item>
-        </Timeline>
-      </Card>
+      <Box style={{ textAlign: 'center' }}>
+        <Text size="28px" fw={900} c="#1a365d" style={{ letterSpacing: -1 }}>Recharge Submitted</Text>
+        <Text size="sm" c="dimmed" mt="xs" fw={600}>Your recharge is being verified.</Text>
+      </Box>
 
-      <Alert color="2d1b4e" icon={<FaInfoCircle />} w="100%">
-        <Text size="sm">
-          Amount: <strong>₹{paymentDetails?.amount?.toLocaleString()}</strong>
-        </Text>
-        <Text size="sm">
-          Transaction ID: <strong>{orderData?.transactionId}</strong>
-        </Text>
-      </Alert>
+      <Paper w="100%" radius="32px" p="xl" withBorder style={{ background: '#f8fafc' }}>
+        <Stack gap="md">
+          <Flex justify="space-between">
+            <Text size="xs" c="dimmed" fw={800}>ORDER ID</Text>
+            <Text size="sm" fw={900}>#{paymentDetails?.orderId}</Text>
+          </Flex>
+          <Divider style={{ borderStyle: 'dashed' }} />
+          <Flex justify="space-between">
+            <Text size="xs" c="dimmed" fw={800}>AMOUNT</Text>
+            <Text size="lg" fw={900} c="blue.9">₹{paymentDetails?.amount?.toLocaleString()}</Text>
+          </Flex>
+          <Divider style={{ borderStyle: 'dashed' }} />
+          <Flex justify="space-between">
+            <Text size="xs" c="dimmed" fw={800}>TRANSACTION ID</Text>
+            <Text size="sm" fw={900}>{orderData?.transactionId || transactionId}</Text>
+          </Flex>
+          <Divider style={{ borderStyle: 'dashed' }} />
+          <Flex justify="space-between" align="center">
+            <Text size="xs" c="dimmed" fw={800}>STATUS</Text>
+            <Badge color="orange" variant="filled" size="sm" radius="sm">PENDING</Badge>
+          </Flex>
+        </Stack>
+      </Paper>
 
-      <Button fullWidth size="lg" onClick={handleComplete} color="#2d1b4e"
+      <Text ta="center" size="xs" c="dimmed" px="xl">
+        Verification usually completes within 5-30 minutes. You will receive a notification once funds are available.
+      </Text>
+
+      <Button
+        fullWidth
+        size="lg"
+        radius="xl"
+        color="#203a43"
+        onClick={handleComplete}
+        style={{ height: 60, fontWeight: 900, boxShadow: '0 10px 20px rgba(49, 130, 206, 0.2)' }}
       >
-        Done
+        DONE
       </Button>
     </Stack>
   );
@@ -640,24 +636,64 @@ const RechargeScreen: React.FC = () => {
   if (walletLoading || paymentLoading) {
     return (
       <Center h="100vh">
-        <Loader size="lg" />
+        <Loader size="lg" color="green" />
       </Center>
     );
   }
 
   return (
-    <div className={classes.container}>
-      <Text className={classes.title}>Recharge Wallet</Text>
+    <Box bg="#f8fafc" style={{ minHeight: "100vh", paddingBottom: 80 }}>
+      {}
+      <Box
+        style={{
+          background: "linear-gradient(135deg, #0f2027 0%, #203a43 100%)",
+          padding: "30px 20px 50px",
+          borderRadius: "0 0 35px 35px",
+          color: "white",
+          position: "relative",
+          overflow: "hidden"
+        }}
+      >
+        <Box
+          style={{
+            position: 'absolute',
+            top: -50,
+            right: -50,
+            width: 200,
+            height: 200,
+            borderRadius: '50%',
+            background: 'rgba(59, 130, 246, 0.1)',
+            filter: 'blur(50px)'
+          }}
+        />
 
-      {renderStepIndicator()}
+        <Stack align="center" gap={4}>
+          <ThemeIcon variant="light" color="rgba(255,255,255,0.1)" size={48} radius="xl">
+            <Zap size={24} color="#d4af37" />
+          </ThemeIcon>
+          <Text size="22px" fw={900} style={{ letterSpacing: '-0.5px' }}>Recharge</Text>
+          <Text size="xs" c="rgba(255,255,255,0.5)" ta="center">
+            Securely allocate funds to your account.
+          </Text>
+        </Stack>
+      </Box>
 
-      {currentStep === RechargeStep.SELECT_AMOUNT && renderAmountSelection()}
-      {currentStep === RechargeStep.SELECT_PAYMENT &&
-        renderPaymentMethodSelection()}
-      {currentStep === RechargeStep.PAYMENT_DETAILS && renderPaymentDetails()}
-      {currentStep === RechargeStep.SUBMIT_UTR && renderUTRSubmission()}
-      {currentStep === RechargeStep.SUCCESS && renderSuccess()}
-    </div>
+      <Container size="sm" p="md">
+        {currentStep !== RechargeStep.SUCCESS && (
+          <Paper radius="32px" p="md" mb="xl" withBorder style={{ background: 'white', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' }}>
+            {renderStepIndicator()}
+          </Paper>
+        )}
+
+        <Box style={{ position: 'relative', zIndex: 1 }}>
+          {currentStep === RechargeStep.SELECT_AMOUNT && renderAmountSelection()}
+          {currentStep === RechargeStep.SELECT_PAYMENT && renderPaymentMethodSelection()}
+          {currentStep === RechargeStep.PAYMENT_DETAILS && renderPaymentDetails()}
+          {currentStep === RechargeStep.SUBMIT_UTR && renderUTRSubmission()}
+          {currentStep === RechargeStep.SUCCESS && renderSuccess()}
+        </Box>
+      </Container>
+    </Box>
   );
 };
 

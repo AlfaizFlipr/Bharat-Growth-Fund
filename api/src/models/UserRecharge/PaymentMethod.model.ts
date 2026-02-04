@@ -4,7 +4,7 @@ export interface IPaymentMethod extends Document {
   methodName: string;
   methodType: "upi" | "qr" | "bank";
   upiId?: string;
-  qrCode?: string; // URL or local file path
+  qrCode?: string; 
   accountName?: string;
   accountNumber?: string;
   ifscCode?: string;

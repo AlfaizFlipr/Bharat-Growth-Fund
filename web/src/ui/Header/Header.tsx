@@ -27,7 +27,7 @@ const Header: React.FC<HeaderProps> = ({ toggleMobile }) => {
         zIndex: 100,
       }}
     >
-      {/* Left Icon */}
+      {}
       <Box style={{ pointerEvents: "auto" }}>
         <ActionIcon variant="transparent" size="lg" aria-label="Language">
           <RiGlobalLine size={22} color="#fff" />
@@ -42,7 +42,7 @@ const Header: React.FC<HeaderProps> = ({ toggleMobile }) => {
         }}
       >
         <svg
-          xmlns="http://www.w3.org/2000/svg"
+          xmlns="http:
           width="70"
           height="70"
           viewBox="0 0 17 48"

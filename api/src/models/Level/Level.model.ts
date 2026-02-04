@@ -1,5 +1,5 @@
 import { Schema, model } from "mongoose";
-import { ILevel ,ILevelMethods } from "../../interface/level.interface";
+import { ILevel, ILevelMethods } from "../../interface/level.interface";
 
 const schema = new Schema<ILevel>(
   {
@@ -21,36 +21,10 @@ const schema = new Schema<ILevel>(
       min: 0,
       default: 0,
     },
-    rewardPerTask: {
+    dailyIncome: {
       type: Number,
       required: true,
       min: 0,
-    },
-    dailyTaskLimit: {
-      type: Number,
-      required: true,
-      min: 1,
-    },
-    aLevelCommissionRate: {
-      type: Number,
-      required: true,
-      min: 0,
-      max: 100,
-      default: 0,
-    },
-    bLevelCommissionRate: {
-      type: Number,
-      required: true,
-      min: 0,
-      max: 100,
-      default: 0,
-    },
-    cLevelCommissionRate: {
-      type: Number,
-      required: true,
-      min: 0,
-      max: 100,
-      default: 0,
     },
     isActive: {
       type: Boolean,
@@ -62,7 +36,7 @@ const schema = new Schema<ILevel>(
     },
     icon: {
       type: String,
-      default: '🍎',
+      default: '💰',
     },
     description: {
       type: String,
@@ -77,4 +51,4 @@ schema.index({ order: 1 });
 
 const levelModel: ILevelMethods = model<ILevel, ILevelMethods>("level", schema);
 
-export default levelModel;
+export default levelModel;

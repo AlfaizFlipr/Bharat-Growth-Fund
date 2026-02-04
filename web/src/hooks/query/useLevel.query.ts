@@ -3,7 +3,18 @@ import { notifications } from "@mantine/notifications";
 import { request } from "../../lib/axios.config";
 import { levelUrls } from "../api-urls/api.url";
 
-/* ----------------------------- GET ALL LEVELS ----------------------------- */
+export interface ILevel {
+  _id: string;
+  levelNumber: number;
+  levelName: string;
+  investmentAmount: number;
+  dailyIncome: number;
+  icon?: string;
+  description?: string;
+  order?: number;
+}
+
+
 const getAllLevels = async () => {
   const response = await request({
     url: levelUrls.GET_ALL,
@@ -18,12 +29,12 @@ export const useGetAllLevelsQuery = () => {
     queryFn: getAllLevels,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
-    staleTime: 1000 * 60 * 2, // 2 minutes
+    staleTime: 1000 * 60 * 2, 
     retry: 2,
   });
 };
 
-/* --------------------------- GET LEVEL BY NAME ---------------------------- */
+
 const getLevelByName = async (levelName: string) => {
   const response = await request({
     url: levelUrls.GET_BY_NAME(levelName),
@@ -39,11 +50,11 @@ export const useGetLevelByNameQuery = (levelName: string) => {
     enabled: !!levelName,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
-    staleTime: 1000 * 60 * 2, // 2 minutes
+    staleTime: 1000 * 60 * 2, 
   });
 };
 
-/* -------------------------- GET LEVEL BY NUMBER --------------------------- */
+
 const getLevelByNumber = async (levelNumber: number) => {
   const response = await request({
     url: levelUrls.GET_BY_NUMBER(levelNumber),
@@ -59,11 +70,11 @@ export const useGetLevelByNumberQuery = (levelNumber?: number) => {
     enabled: !!levelNumber,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
-    staleTime: 1000 * 60 * 2, // 2 minutes
+    staleTime: 1000 * 60 * 2, 
   });
 };
 
-/* ----------------------------- CREATE LEVEL ------------------------------- */
+
 interface CreateLevelPayload {
   name: string;
   number: number;
@@ -103,7 +114,7 @@ export const useCreateLevelMutation = () => {
   });
 };
 
-/* ----------------------------- UPDATE LEVEL ------------------------------- */
+
 interface UpdateLevelPayload {
   levelId: string;
   updates: {
@@ -146,7 +157,7 @@ export const useUpdateLevelMutation = () => {
   });
 };
 
-/* --------------------------- UPGRADE USER LEVEL --------------------------- */
+
 interface UpgradeLevelPayload {
   userId?: string;
   newLevelNumber: number;

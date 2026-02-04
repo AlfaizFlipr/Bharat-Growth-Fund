@@ -1,7 +1,5 @@
-// components/Profile/Profile.tsx
 import React, { useEffect, useState } from "react";
 import {
-  Modal,
   Box,
   Text,
   Flex,
@@ -9,26 +7,30 @@ import {
   Divider,
   Loader,
   Center,
-  Tooltip,
-  Badge,
   Stack,
+  ThemeIcon,
+  Avatar,
+  Paper,
+  Badge,
+  Container,
+  ActionIcon,
+  SimpleGrid,
 } from "@mantine/core";
 import {
-  FaBuilding,
-  FaIdCard,
-  FaFileAlt,
-  FaUsers,
-  FaShieldAlt,
-  FaDownload,
-  FaSignOutAlt,
-  FaEdit,
-  FaDollarSign,
-  FaCheckCircle,
-} from "react-icons/fa";
-import manualPdf from "../../uploads/Apple_India_27_X_7.pdf";
+  User,
+  ShieldCheck,
+  FileText,
+  LogOut,
+  ChevronRight,
+  TrendingUp,
+  Wallet,
+  ArrowUpRight,
+  Zap,
+  Building2,
+  Settings,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { IMAGES } from "../../assets";
 import type { RootState } from "../../store/store";
 import { login } from "../../store/reducer/authSlice";
 import { useVerifyUserQuery } from "../../hooks/query/useGetVerifyUser.query";
@@ -36,64 +38,44 @@ import { notifications } from "@mantine/notifications";
 import { useLogoutMutation } from "../../hooks/mutations/useLogout.mutation";
 import UpdateProfileModal from "../../components/UpdateProfileModal/UpdateProfileModal";
 
-interface StatItemProps {
-  label: string;
-  value: string;
-}
-
-const StatItem: React.FC<StatItemProps> = ({ label, value }) => (
-  <Flex justify="space-between" align="center" py={12}>
-    <Text size="md" c="#555454ff" fw={400}>
-      {label}
-    </Text>
-    <Text size="md" fw={600} c="#000">
-      {value}
-    </Text>
-  </Flex>
-);
-
 const menuItems = [
   {
-    icon: <FaBuilding size={24} />,
+    icon: <Building2 size={20} />,
     title: "Company Introduction",
     path: "/company-intro",
+    color: "blue",
   },
   {
-    icon: <FaIdCard size={24} />,
-    title: "Identity authentication",
+    icon: <ShieldCheck size={20} />,
+    title: "Identity Verification",
     path: "/identity-verification",
+    color: "teal",
   },
   {
-    icon: <FaFileAlt size={24} />,
+    icon: <FileText size={20} />,
     title: "Financial Records",
     path: "/financial-records",
+    color: "emerald",
   },
   {
-    icon: <FaUsers size={24} />,
-    title: "Team building application",
-    path: "/team",
+    icon: <Wallet size={20} />,
+    title: "USD Withdrawal",
+    path: "/usd-withdrawal",
+    color: "indigo",
   },
   {
-    icon: <FaShieldAlt size={24} />,
-    title: "Account Security",
-    path: "/security",
-  },
-  {
-    icon: <FaFileAlt size={24} />,
+    icon: <FileText size={20} />,
     title: "Privacy Policy",
     path: "/privacy-policy",
+    color: "gray",
   },
   {
-    icon: <FaDownload size={24} />,
-    title: "Download User Manual",
-    path: "download-manual",
+    icon: <TrendingUp size={20} />,
+    title: "Lucky Draw",
+    path: "/lucky-draw",
+    color: "orange",
   },
-  {
-    icon: <FaDownload size={24} />,
-    title: "Download App",
-    path: "/download-app",
-  },
-  { icon: <FaSignOutAlt size={24} />, title: "Logout", path: "logout" },
+  { icon: <LogOut size={20} />, title: "Logout", path: "logout", color: "red" },
 ];
 
 const Profile: React.FC = () => {
@@ -105,7 +87,6 @@ const Profile: React.FC = () => {
   const { data, isLoading, isError, refetch } = useVerifyUserQuery();
   const logoutMutation = useLogoutMutation();
   const [updateModalOpened, setUpdateModalOpened] = useState(false);
-  const [downloadModalOpened, setDownloadModalOpened] = useState(false);
 
   useEffect(() => {
     if (data?.status === "success" && data.data?.user) {
@@ -115,119 +96,43 @@ const Profile: React.FC = () => {
     }
   }, [data, isError, dispatch, navigate]);
 
-  const formatCurrency = (value?: number): string => {
-    return value !== undefined ? value.toFixed(2) : "0.00";
-  };
-
-  const getInitials = (name?: string): string => {
-    if (!name || typeof name !== "string" || name.trim() === "") {
-      return "U";
-    }
-
-    return name
-      .trim()
-      .split(" ")
-      .filter((n) => n.length > 0)
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
   const handleMenuClick = async (path: string) => {
     if (path === "logout") {
       try {
-        const res = await logoutMutation.mutateAsync();
-        if (res.status === "success") {
-          // Clear all auth data
-          localStorage.removeItem("authToken");
-          localStorage.clear();
-          refetch();
-          notifications.show({
-            title: "Logout Successful",
-            message: "You have been logged out successfully.",
-            color: "green",
-          });
-
-          navigate("/login");
-        }
-      } catch (error: any) {
-        localStorage.removeItem("authToken");
+        await logoutMutation.mutateAsync();
         localStorage.clear();
-
-        notifications.show({
-          title: "Logged Out",
-          message: "You have been logged out.",
-          color: "blue",
-        });
-
+        refetch();
+        notifications.show({ title: "Logged Out", message: "Successfully logged out.", color: "green" });
+        navigate("/login");
+      } catch {
+        localStorage.clear();
         navigate("/login");
       }
       return;
     }
-
-    if (path === "download-manual") {
-      try {
-        const link = document.createElement("a");
-        link.href = manualPdf;
-        link.download = "Apple_India_27_X_7.pdf";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        setTimeout(() => {
-          setDownloadModalOpened(true);
-        }, 500);
-      } catch (error) {
-        console.error("PDF Download error:", error);
-        notifications.show({
-          title: "Download Failed",
-          message: "Failed to download the user manual. Please try again.",
-          color: "red",
-        });
-      }
-      return;
-    }
-
     navigate(path);
   };
-
-  const handleRecharge = () => navigate("/recharge");
-  const handleWithdrawal = () => navigate("/withdrawal");
-  const handleUSDWithdrawal = () => navigate("/usd-withdrawal");
-
-  // Check if user is USD enabled
-  const isUSDUser = userData?.isUSDUser || false;
 
   if (isLoading || isLoggedIn === "loading") {
     return (
       <Center h="100vh">
-        <Loader size="lg" color="#8FABD4" />
+        <Loader size="lg" color="blue" />
       </Center>
     );
   }
 
   if (isError || !userData) {
     return (
-      <Center h="100vh">
+      <Center h="100vh" p="xl">
         <Box ta="center">
-          <Text size="lg" fw={600} c="red">
-            Failed to load profile
-          </Text>
-          <Button
-            mt="md"
-            onClick={() => navigate("/login")}
-            style={{
-              background: "linear-gradient(135deg, #f9d77e 0%, #f0b944 100%)",
-              color: "#fff",
-            }}
-          >
-            Go to Login
-          </Button>
+          <Text fw={800} size="xl" mb="md">Session Expired</Text>
+          <Text c="dimmed" size="sm" mb="xl">Please login again to access your account.</Text>
+          <Button fullWidth onClick={() => navigate("/login")} color="blue" radius="md">Go to Login</Button>
         </Box>
       </Center>
     );
   }
+
   const getImageUrl = (path: string | undefined | null): string | null => {
     if (!path) return null;
 
@@ -246,327 +151,186 @@ const Profile: React.FC = () => {
   const profileImageUrl = getImageUrl(userData.picture);
 
   return (
-    <>
+    <Box bg="#f8f9fa" style={{ minHeight: "100vh" }}>
       <Box
         style={{
-          background: `url(${IMAGES.Home_Page}) center/cover no-repeat`,
+          background: "linear-gradient(135deg, #0f2027 0%, #203a43 100%)",
+          padding: "60px 20px 60px",
+          borderRadius: "0 0 40px 40px",
+          color: "white",
           position: "relative",
-          minHeight: 120,
+          overflow: "hidden"
         }}
       >
-        <Box p={20}>
-          <Flex direction="row" justify="space-between">
-            <Flex align="center" gap="16px">
-              {userData.picture ? (
-                <Box
-                  style={{
-                    width: 80,
-                    height: 80,
-                    borderRadius: "50%",
-                    background: "#8FABD4",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    border: "3px solid #fff",
-                    overflow: "hidden",
-                  }}
-                >
-                  <img
-                    src={profileImageUrl ?? ""}
-                    alt={userData.name || "User"}
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                    }}
-                  />
-                </Box>
-              ) : (
-                <Box
-                  style={{
-                    width: 80,
-                    height: 80,
-                    borderRadius: "50%",
-                    background: "#8FABD4",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: 24,
-                    fontWeight: 700,
-                    color: "#fff",
-                    border: "3px solid #fff",
-                  }}
-                >
-                  {getInitials(userData.name)}
-                </Box>
-              )}
+        <Box
+          style={{
+            position: "absolute",
+            top: -50,
+            right: -50,
+            width: 200,
+            height: 200,
+            borderRadius: "50%",
+            background: "rgba(255,255,255,0.05)",
+            filter: "blur(50px)",
+          }}
+        />
 
-              <Flex direction="column">
-                <Text size="sm" c="#fff" fw={500}>
-                  {userData.phone || "N/A"}
-                </Text>
-                <Box
-                  mt={10}
-                  px={10}
-                  style={{
-                    background: "#8FABD4",
-                    borderRadius: 4,
-                    color: "black",
-                    fontSize: 14,
-                    fontWeight: 600,
-                    alignSelf: "flex-start",
-                  }}
-                >
-                  {userData.username || userData.name || "User"}
-                </Box>
-                {userData.levelName && (
-                  <Box
-                    mt={6}
-                    px={8}
-                    style={{
-                      background: "rgba(255, 255, 255, 0.2)",
-                      borderRadius: 4,
-                      color: "#fff",
-                      fontSize: 12,
-                      fontWeight: 500,
-                      alignSelf: "flex-start",
-                    }}
-                  >
-                    {userData.levelName} • Level {userData.userLevel || 0}
-                  </Box>
-                )}
-              </Flex>
-            </Flex>
-            <Flex onClick={() => setUpdateModalOpened(true)}>
-              <Tooltip label="Edit Profile" withArrow>
-                <FaEdit size={18} color="white" />
-              </Tooltip>
-            </Flex>
+        <Flex align="center" justify="space-between">
+          <Flex align="center" gap="lg">
+            <Box style={{ position: 'relative' }}>
+              <Avatar
+                src={profileImageUrl}
+                size={80}
+                radius="100%"
+                style={{ border: '4px solid rgba(255,255,255,0.15)', boxShadow: '0 8px 16px rgba(0,0,0,0.2)' }}
+              >
+                <User size={40} />
+              </Avatar>
+              <ActionIcon
+                variant="filled"
+                color="blue"
+                size="sm"
+                radius="xl"
+                style={{ position: 'absolute', bottom: 0, right: 0, border: '2px solid #203a43' }}
+                onClick={() => setUpdateModalOpened(true)}
+              >
+                <Settings size={12} />
+              </ActionIcon>
+            </Box>
+            <Box>
+              <Text size="xl" fw={900} style={{ letterSpacing: '-0.5px' }}>
+                {userData.username || userData.name || "User"}
+              </Text>
+              <Text size="sm" c="rgba(255,255,255,0.6)" mb={4}>{userData.phone}</Text>
+              <Badge variant="filled" color="green" size="sm">
+                Current Level: {Number(userData.userLevel || userData.currentLevelNumber) === -1 ? "No Level" : (userData.userLevel || userData.currentLevelNumber)}
+              </Badge>
+            </Box>
           </Flex>
-        </Box>
+          <ThemeIcon variant="light" color="rgba(255,255,255,0.1)" size={44} radius="xl">
+            <ShieldCheck size={24} color="#d4af37" />
+          </ThemeIcon>
+        </Flex>
       </Box>
 
-      <Box px="md" mt={-20} bg="#fff">
-        <Box
-          p="lg"
+      <Container size="sm" p="md" mt={-40} style={{ position: 'relative', zIndex: 10 }}>
+        {}
+        <Paper
+          radius="32px"
+          p="xl"
+          mb="xl"
           style={{
-            background: "#fff",
-            borderRadius: 16,
-            boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
-            zIndex: "100",
+            background: "rgba(255, 255, 255, 0.9)",
+            backdropFilter: "blur(20px)",
+            border: "1px solid rgba(255, 255, 255, 0.3)",
+            boxShadow: "0 20px 40px rgba(0,0,0,0.08)",
           }}
         >
-          <StatItem
-            label="Today's mission income"
-            value={formatCurrency(userData.todayIncome)}
-          />
-          <Divider />
-          <StatItem
-            label="This month's mission income"
-            value={formatCurrency(userData.monthlyIncome)}
-          />
-          <Divider />
-          <StatItem
-            label="Total revenue"
-            value={formatCurrency(data?.data?.stats?.totalRevenue)}
-          />
-          <Divider />
-          <StatItem
-            label="Total withdrawals"
-            value={formatCurrency(userData.totalWithdrawals)}
-          />
-          <Divider />
-          <StatItem
-            label="Prime wallet"
-            value={formatCurrency(userData.mainWallet)}
-          />
-          <Divider />
-          <StatItem
-            label="Task Wallet"
-            value={formatCurrency(userData.commissionWallet)}
-          />
-          <Divider />
-          <StatItem
-            label="Profit"
-            value={formatCurrency(data?.data?.stats?.profit)}
-          />
-
-          <Flex gap="md" mt="lg">
-            <Button
-              flex={1}
-              onClick={handleRecharge}
-              style={{
-                background: "linear-gradient(135deg, #8FABD4 0%, #8FABD4 100%)",
-                color: "#fff",
-                fontWeight: 600,
-                borderRadius: "100px",
-                border: "none",
-              }}
-            >
-              Recharge
-            </Button>
-            <Button
-              flex={1}
-              onClick={handleWithdrawal}
-              style={{
-                background: "linear-gradient(135deg, #8FABD4 0%, #8FABD4 100%)",
-                color: "#fff",
-                fontWeight: 600,
-                borderRadius: "100px",
-                border: "none",
-              }}
-            >
-              Withdrawal
-            </Button>
-          </Flex>
-
-          {/* USD Withdrawal Option for USD Users */}
-          {isUSDUser && (
-            <Button
-              fullWidth
-              mt="md"
-              onClick={handleUSDWithdrawal}
-              leftSection={<FaDollarSign />}
-              style={{
-                background: "linear-gradient(135deg, #1a4731 0%, #2d6a4f 100%)",
-                color: "#fff",
-                fontWeight: 600,
-                borderRadius: "100px",
-                border: "none",
-              }}
-            >
-              USD Withdrawal
-              <Badge ml="xs" color="green" variant="light" size="xs">
-                New
-              </Badge>
-            </Button>
-          )}
-        </Box>
-
-        {/* Menu Items */}
-        <Box mt="lg" mb="sm">
-          {menuItems.map((item, index) => (
-            <Box key={item.title}>
-              <Flex
-                align="center"
-                justify="space-between"
-                py={16}
-                onClick={() => handleMenuClick(item.path)}
-                style={{ cursor: "pointer" }}
-              >
-                <Flex align="center" gap="md">
-                  <Box
-                    style={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: "50%",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: "#8FABD4",
-                      background: "#eeeeee7b",
-                    }}
-                  >
-                    {item.icon}
-                  </Box>
-                  <Text size="md" fw={500} c="#000">
-                    {item.title}
-                  </Text>
-                </Flex>
-                <Text size="xl" c="#999">
-                  ›
-                </Text>
+          <Stack gap="xl">
+            <Box>
+              <Flex align="center" gap="xs" mb={4}>
+                <Wallet size={14} color="#666" />
+                <Text size="xs" c="dimmed" fw={800} style={{ letterSpacing: 1.2 }}>MAIN WALLET</Text>
               </Flex>
-              {index !== menuItems.length - 1 && <Divider />}
+              <Flex align="center" justify="space-between">
+                <Text size="38px" fw={900} c="#1a202c">₹{userData.mainWallet?.toLocaleString() || "0.00"}</Text>
+                <ThemeIcon variant="light" color="emerald" size="lg" radius="md">
+                  <ArrowUpRight size={20} />
+                </ThemeIcon>
+              </Flex>
             </Box>
-          ))}
+
+            <SimpleGrid cols={2} spacing="md">
+              <Button
+                variant="filled"
+                color="#203a43"
+                size="md"
+                radius="xl"
+                onClick={() => navigate('/recharge')}
+                leftSection={<Zap size={18} />}
+                style={{ boxShadow: '0 8px 16px rgba(43, 108, 176, 0.2)' }}
+              >
+                Recharge
+              </Button>
+              <Button
+                variant="outline"
+                color="#203a43"
+                size="md"
+                radius="xl"
+                onClick={() => navigate('/withdrawal')}
+                leftSection={<Wallet size={18} />}
+              >
+                Withdraw
+              </Button>
+            </SimpleGrid>
+
+            <Divider color="gray.1" />
+
+            <SimpleGrid cols={3} spacing="xs">
+              <Box ta="center">
+                <Text size="10px" c="dimmed" fw={800} mb={4}>TODAY'S</Text>
+                <Text fw={800} size="sm" c="emerald.7">₹{(data?.data?.stats?.todayIncome || 0).toFixed(2)}</Text>
+              </Box>
+              <Box ta="center" style={{ borderLeft: '1px solid #f1f1f1', borderRight: '1px solid #f1f1f1' }}>
+                <Text size="10px" c="dimmed" fw={800} mb={4}>TOTAL EARNINGS</Text>
+                <Text fw={800} size="sm">₹{(data?.data?.stats?.totalRevenue || 0).toFixed(2)}</Text>
+              </Box>
+            </SimpleGrid>
+          </Stack>
+        </Paper>
+
+        {}
+        <Stack gap="sm">
+          <Text fw={800} size="sm" px="xs" c="dimmed">ACCOUNT SETTINGS</Text>
+          <Paper radius="24px" withBorder shadow="sm" style={{ overflow: 'hidden' }}>
+            {menuItems.map((item, index) => (
+              <React.Fragment key={item.title}>
+                <Flex
+                  align="center"
+                  justify="space-between"
+                  p="lg"
+                  onClick={() => handleMenuClick(item.path)}
+                  style={{
+                    cursor: "pointer",
+                    backgroundColor: 'white',
+                    transition: 'all 0.2s ease',
+                    "&:hover": { backgroundColor: '#fcfcfc' }
+                  }}
+                >
+                  <Flex align="center" gap="lg">
+                    <ThemeIcon
+                      size={44}
+                      radius="14px"
+                      variant="light"
+                      color={item.color}
+                    >
+                      {item.icon}
+                    </ThemeIcon>
+                    <Text fw={700} size="sm" c="#2d3436">{item.title}</Text>
+                  </Flex>
+                  <ChevronRight size={18} color="#cbd5e0" />
+                </Flex>
+                {index !== menuItems.length - 1 && <Divider color="gray.0" />}
+              </React.Fragment>
+            ))}
+          </Paper>
+        </Stack>
+
+        <Box ta="center" mt="40px" mb="20px">
+          <Flex align="center" justify="center" gap="xs" mb={4}>
+            <TrendingUp size={14} color="#cbd5e0" />
+            <Text size="xs" fw={700} c="dimmed" style={{ letterSpacing: 0.5 }}>BHARAT GROWTH FUND</Text>
+          </Flex>
+          <Text size="xs" c="dimmed">Advanced Financial Services Engine • v2.1.0</Text>
         </Box>
-      </Box>
+      </Container>
 
       <UpdateProfileModal
         opened={updateModalOpened}
         onClose={() => setUpdateModalOpened(false)}
         userData={userData}
       />
-
-      {/* Download Success Modal */}
-      <Modal
-        opened={downloadModalOpened}
-        onClose={() => setDownloadModalOpened(false)}
-        centered
-        size="sm"
-        radius="xl"
-        withCloseButton={false}
-        padding={0}
-        styles={{
-          content: {
-            overflow: "hidden",
-            boxShadow: "0 20px 40px rgba(0,0,0,0.1)",
-          },
-        }}
-      >
-        <Box
-          p="xl"
-          style={{
-            background: "linear-gradient(180deg, #f8faff 0%, #ffffff 100%)",
-          }}
-        >
-          <Stack align="center" gap="lg">
-            <Box
-              style={{
-                width: 80,
-                height: 80,
-                borderRadius: "50%",
-                background: "#e8f5e9",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                boxShadow: "0 0 25px rgba(64, 192, 87, 0.25)",
-              }}
-            >
-              <FaCheckCircle size={44} color="#40C057" />
-            </Box>
-
-            <Box>
-              <Text
-                size="xl"
-                fw={800}
-                ta="center"
-                c="#1a1a1a"
-                style={{ letterSpacing: "-0.5px", fontSize: "24px" }}
-              >
-                Success!
-              </Text>
-              <Text size="md" fw={600} ta="center" c="#4a4a4a" mt={4}>
-                User manual download completed
-              </Text>
-            </Box>
-
-            <Text size="sm" fw={400} ta="center" c="#666" px="xs" lh={1.5}>
-              Please read the user manual to understand the features and
-              maximize your experience with the app.
-            </Text>
-
-            <Button
-              fullWidth
-              size="lg"
-              onClick={() => setDownloadModalOpened(false)}
-              style={{
-                background: "linear-gradient(135deg, #8FABD4 0%, #6B8FB8 100%)",
-                borderRadius: "100px",
-                height: 52,
-                boxShadow: "0 8px 20px rgba(143, 171, 212, 0.35)",
-                fontSize: "16px",
-                fontWeight: 700,
-                border: "none",
-              }}
-            >
-              Great, thanks!
-            </Button>
-          </Stack>
-        </Box>
-      </Modal>
-    </>
+    </Box>
   );
 };
 

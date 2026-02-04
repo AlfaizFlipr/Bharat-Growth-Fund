@@ -12,7 +12,7 @@ const Drawer: React.FC<IProps> = ({ hidden, toggleSidebar }) => {
   return (
     <Box
       p={"1rem"}
-      className={`${classes.root} ${!hidden && classes.activeNav}`}
+      className={`${classes.root} ${!hidden ? classes.activeNav : ""}`}
     >
       <Box mb={15}>
         <Burger

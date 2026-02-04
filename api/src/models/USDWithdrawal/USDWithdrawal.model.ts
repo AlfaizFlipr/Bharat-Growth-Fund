@@ -1,22 +1,22 @@
-// models/USDWithdrawal/USDWithdrawal.model.ts
+
 import { Schema, model, Document } from 'mongoose';
 
 export interface IUSDWithdrawal extends Document {
   userId: Schema.Types.ObjectId;
-  amountINR: number; // Amount in INR from wallet
-  amountUSD: number; // Converted USD amount
-  exchangeRate: number; // Exchange rate at time of request
+  amountINR: number; 
+  amountUSD: number; 
+  exchangeRate: number; 
   source?: 'usd_wallet' | 'main_wallet';
   
-  // Withdrawal method
+  
   withdrawalMethod: 'stripe' | 'bitget';
   
-  // Stripe fields
+  
   stripePayoutId: string | null;
   stripeTransferId: string | null;
   stripePayoutStatus: string | null;
   
-  // Bitget fields
+  
   bitgetWithdrawId: string | null;
   bitgetWalletAddress: string | null;
   bitgetNetwork: string | null;
@@ -55,13 +55,13 @@ const usdWithdrawalSchema = new Schema<IUSDWithdrawal>(
       type: Number,
       required: true,
     },
-    // Withdrawal method
+    
     withdrawalMethod: {
       type: String,
       enum: ['stripe', 'bitget'],
       default: 'bitget',
     },
-    // Stripe fields
+    
     stripePayoutId: {
       type: String,
       default: null,
@@ -74,7 +74,7 @@ const usdWithdrawalSchema = new Schema<IUSDWithdrawal>(
       type: String,
       default: null,
     },
-    // Bitget fields
+    
     bitgetWithdrawId: {
       type: String,
       default: null,
@@ -125,7 +125,7 @@ const usdWithdrawalSchema = new Schema<IUSDWithdrawal>(
       ref: 'Admin',
       default: null,
     },
-    // Source of funds for this withdrawal: USD wallet or user's main (prime) wallet
+    
     source: {
       type: String,
       enum: ['usd_wallet', 'main_wallet'],
@@ -135,7 +135,7 @@ const usdWithdrawalSchema = new Schema<IUSDWithdrawal>(
   { timestamps: true }
 );
 
-// Indexes for faster queries
+
 usdWithdrawalSchema.index({ userId: 1, status: 1 });
 usdWithdrawalSchema.index({ status: 1 });
 usdWithdrawalSchema.index({ createdAt: -1 });

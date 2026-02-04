@@ -1,35 +1,37 @@
-// pages/admin/LevelManagement.tsx
-import { useState } from 'react';
-import { 
-  Text, 
-  Group, 
-  Flex, 
-  Table, 
-  Badge, 
-  ActionIcon, 
-  TextInput, 
-  Button, 
-  Modal, 
+import { useState } from "react";
+import {
+  Text,
+  Group,
+  Flex,
+  Table,
+  Badge,
+  ActionIcon,
+  TextInput,
+  Button,
+  Modal,
   Pagination,
   Loader,
   Paper,
-  Alert,
-  Tooltip,
+  Grid,
   NumberInput,
   Switch,
-  Grid
-} from '@mantine/core';
-import { 
-  FiSearch, 
-  FiEdit, 
-  FiTrash2, 
+  Stack,
+  ThemeIcon,
+  Tooltip,
+  Alert,
+  SimpleGrid,
+  Title,
+  Box,
+} from "@mantine/core";
+import {
+  FiSearch,
+  FiEdit,
+  FiTrash2,
   FiPlus,
   FiAlertCircle,
-  FiTrendingUp,
   FiCheckCircle,
   FiXCircle,
   FiAward,
-  FiDollarSign
 } from 'react-icons/fi';
 import { notifications } from '@mantine/notifications';
 import {
@@ -39,16 +41,13 @@ import {
   useDeleteLevel
 } from '../../hooks/query/level.query';
 import classes from './index.module.scss';
+import Heading from '../../@ui/common/Heading';
 
 interface LevelFormData {
   levelNumber: number;
   levelName: string;
   investmentAmount: number;
-  rewardPerTask: number;
-  dailyTaskLimit: number;
-  aLevelCommissionRate: number;
-  bLevelCommissionRate: number;
-  cLevelCommissionRate: number;
+  dailyIncome: number;
   icon: string;
   description: string;
   order: number;
@@ -56,34 +55,30 @@ interface LevelFormData {
 }
 
 const LevelManagement = () => {
-  // Filter states
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [activePage, setActivePage] = useState(1);
   const itemsPerPage = 10;
 
-  // Modal states
+  
   const [createModal, setCreateModal] = useState(false);
   const [editModal, setEditModal] = useState(false);
   const [deleteModal, setDeleteModal] = useState(false);
   const [selectedLevel, setSelectedLevel] = useState<any>(null);
 
-  // Form data
+  
   const [formData, setFormData] = useState<LevelFormData>({
-    levelNumber: 0,
+    levelNumber: 1,
     levelName: '',
     investmentAmount: 0,
-    rewardPerTask: 0,
-    dailyTaskLimit: 0,
-    aLevelCommissionRate: 0,
-    bLevelCommissionRate: 0,
-    cLevelCommissionRate: 0,
-    icon: '🍎',
+    dailyIncome: 0,
+    icon: '💰',
     description: '',
     order: 0,
     isActive: true
   });
 
-  // Fetch levels
+  
   const { data, isLoading, error } = useAllLevels({
     page: activePage,
     limit: itemsPerPage,
@@ -91,7 +86,7 @@ const LevelManagement = () => {
     isActive: true
   });
 
-  // Mutations
+  
   const createLevelMutation = useCreateLevel();
   const updateLevelMutation = useUpdateLevel();
   const deleteLevelMutation = useDeleteLevel();
@@ -100,20 +95,16 @@ const LevelManagement = () => {
   const pagination = data?.pagination || {};
   const statistics = data?.statistics || {};
 
-  // Handlers
+  
   const handleCreateLevel = () => {
     setFormData({
-      levelNumber: 0,
+      levelNumber: levels.length + 1,
       levelName: '',
       investmentAmount: 0,
-      rewardPerTask: 0,
-      dailyTaskLimit: 0,
-      aLevelCommissionRate: 0,
-      bLevelCommissionRate: 0,
-      cLevelCommissionRate: 0,
-      icon: '🍎',
+      dailyIncome: 0,
+      icon: '💰',
       description: '',
-      order: 0,
+      order: levels.length + 1,
       isActive: true
     });
     setCreateModal(true);
@@ -125,12 +116,8 @@ const LevelManagement = () => {
       levelNumber: level.levelNumber,
       levelName: level.levelName,
       investmentAmount: level.investmentAmount,
-      rewardPerTask: level.rewardPerTask,
-      dailyTaskLimit: level.dailyTaskLimit,
-      aLevelCommissionRate: level.aLevelCommissionRate,
-      bLevelCommissionRate: level.bLevelCommissionRate,
-      cLevelCommissionRate: level.cLevelCommissionRate,
-      icon: level.icon || '🍎',
+      dailyIncome: level.dailyIncome || 0,
+      icon: level.icon || '💰',
       description: level.description || '',
       order: level.order,
       isActive: level.isActive
@@ -144,10 +131,10 @@ const LevelManagement = () => {
   };
 
   const confirmCreateLevel = async () => {
-    if (!formData.levelName || formData.rewardPerTask <= 0 || formData.dailyTaskLimit <= 0) {
+    if (!formData.levelName || formData.dailyIncome <= 0 || formData.investmentAmount < 0) {
       notifications.show({
         title: 'Validation Error',
-        message: 'Please fill all required fields',
+        message: 'Please fill all required fields correctly',
         color: 'red',
         icon: <FiXCircle />
       });
@@ -238,52 +225,42 @@ const LevelManagement = () => {
     <Table.Tr key={level._id}>
       <Table.Td>
         <Group gap="sm">
-          <Text size="2xl">{level.icon}</Text>
+          <Text size="xl">{level.icon}</Text>
           <div>
-            <Text size="sm" fw={500}>{level.levelName}</Text>
+            <Text size="sm" fw={800} c="#0f2027">{level.levelName}</Text>
             <Text size="xs" c="dimmed">Level {level.levelNumber}</Text>
           </div>
         </Group>
       </Table.Td>
       <Table.Td>
-        <Text size="sm" fw={600} c="blue">₹{level.investmentAmount}</Text>
+        <Text size="sm" fw={700} c="blue.8">₹{level.investmentAmount?.toLocaleString()}</Text>
       </Table.Td>
       <Table.Td>
-        <Text size="sm" fw={600} c="green">₹{level.rewardPerTask}</Text>
+        <Text size="sm" fw={700} c="green.8">₹{level.dailyIncome?.toLocaleString()}/day</Text>
       </Table.Td>
       <Table.Td>
-        <Text size="sm">{level.dailyTaskLimit}</Text>
-      </Table.Td>
-      <Table.Td>
-        <Text size="xs" c="dimmed">
-          A: {level.aLevelCommissionRate}% | B: {level.bLevelCommissionRate}% | C: {level.cLevelCommissionRate}%
-        </Text>
-      </Table.Td>
-      <Table.Td>
-        <Badge color={level.isActive ? 'green' : 'gray'} size="sm">
+        <Badge color={level.isActive ? 'teal' : 'gray'} variant="light" size="sm">
           {level.isActive ? 'Active' : 'Inactive'}
         </Badge>
       </Table.Td>
       <Table.Td>
         <Group gap="xs">
           <Tooltip label="Edit Level">
-            <ActionIcon 
-              variant="light" 
-              color="orange"
-              size="sm"
+            <ActionIcon
+              variant="subtle"
+              color="blue"
               onClick={() => handleEditLevel(level)}
             >
-              <FiEdit size={14} />
+              <FiEdit size={16} />
             </ActionIcon>
           </Tooltip>
           <Tooltip label="Delete Level">
-            <ActionIcon 
-              variant="light" 
+            <ActionIcon
+              variant="subtle"
               color="red"
-              size="sm"
               onClick={() => handleDeleteLevel(level)}
             >
-              <FiTrash2 size={14} />
+              <FiTrash2 size={16} />
             </ActionIcon>
           </Tooltip>
         </Group>
@@ -292,310 +269,134 @@ const LevelManagement = () => {
   ));
 
   return (
-    <Flex direction="column" gap="md" className={classes.container}>
-      {/* Statistics */}
-      <Grid>
-        <Grid.Col span={{ base: 12, sm: 6, md: 3 }}>
-          <Paper p="md" shadow="xs" className={classes.statsCard}>
-            <Group>
-              <FiAward size={32} color="white" />
-              <div>
-                <Text size="xs" c="white" opacity={0.9}>Total Levels</Text>
-                <Text size="xl" fw={700} c="white">{statistics.totalLevels || 0}</Text>
-              </div>
-            </Group>
-          </Paper>
-        </Grid.Col>
-        <Grid.Col span={{ base: 12, sm: 6, md: 3 }}>
-          <Paper p="md" shadow="xs" style={{ background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)' }}>
-            <Group>
-              <FiCheckCircle size={32} color="white" />
-              <div>
-                <Text size="xs" c="white" opacity={0.9}>Active Levels</Text>
-                <Text size="xl" fw={700} c="white">{statistics.activeLevels || 0}</Text>
-              </div>
-            </Group>
-          </Paper>
-        </Grid.Col>
-        <Grid.Col span={{ base: 12, sm: 6, md: 3 }}>
-          <Paper p="md" shadow="xs" style={{ background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' }}>
-            <Group>
-              <FiDollarSign size={32} color="white" />
-              <div>
-                <Text size="xs" c="white" opacity={0.9}>Total Investment</Text>
-                <Text size="xl" fw={700} c="white">₹{statistics.totalInvestment || 0}</Text>
-              </div>
-            </Group>
-          </Paper>
-        </Grid.Col>
-        <Grid.Col span={{ base: 12, sm: 6, md: 3 }}>
-          <Paper p="md" shadow="xs" style={{ background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)' }}>
-            <Group>
-              <FiTrendingUp size={32} color="white" />
-              <div>
-                <Text size="xs" c="white" opacity={0.9}>Total Users</Text>
-                <Text size="xl" fw={700} c="white">{statistics.totalUsers || 0}</Text>
-              </div>
-            </Group>
-          </Paper>
-        </Grid.Col>
-      </Grid>
+    <Box p="md" className={classes.container}>
+      <Stack gap="xl">
+        <Box>
+          <Heading order={2} fw={900} c="#0f2027">Level Management</Heading>
+          <Text c="dimmed" size="sm">Configure investment tiers and daily rewards.</Text>
+        </Box>
 
-      {/* Header */}
-      <Paper p="md" shadow="xs" className={classes.header}>
-        <Group justify="space-between" mb="md">
-          <Flex gap="xs" direction="column" align="flex-start">
-            <Text size="xl" fw={700} className={classes.title}>Level Management</Text>
-            <Text size="sm" c="dimmed" className={classes.subtitle}>
-              Manage investment levels and rewards
-            </Text>
-          </Flex>
-          <Button 
-            leftSection={<FiPlus />} 
+        {}
+        <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md">
+          <Paper p="lg" radius="lg" withBorder>
+            <Group justify="space-between">
+              <ThemeIcon variant="light" color="blue" size={40} radius="md">
+                <FiAward size={20} />
+              </ThemeIcon>
+              <Text fw={900} size="xl">{statistics.totalLevels || 0}</Text>
+            </Group>
+            <Text size="sm" c="dimmed" mt="xs" fw={700}>Total Levels</Text>
+          </Paper>
+
+          <Paper p="lg" radius="lg" withBorder>
+            <Group justify="space-between">
+              <ThemeIcon variant="light" color="teal" size={40} radius="md">
+                <FiCheckCircle size={20} />
+              </ThemeIcon>
+              <Text fw={900} size="xl">{statistics.activeLevels || 0}</Text>
+            </Group>
+            <Text size="sm" c="dimmed" mt="xs" fw={700}>Active Levels</Text>
+          </Paper>
+
+          <Button
+            fullWidth
+            h="auto"
+            radius="lg"
+            color="#0f2027"
+            leftSection={<FiPlus />}
             onClick={handleCreateLevel}
-            gradient={{ from: 'blue', to: 'cyan', deg: 90 }}
-            variant="gradient"
+            style={{ justifyContent: 'center' }}
           >
-            Create Level
+            Create New Level
           </Button>
-        </Group>
+        </SimpleGrid>
 
-        {/* Filters */}
-        <Group gap="md" className={classes.filters}>
-          <TextInput
-            placeholder="Search levels..."
-            leftSection={<FiSearch />}
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-              setActivePage(1);
-            }}
-            style={{ flex: 1 }}
-            className={classes.searchInput}
-          />
-        </Group>
-      </Paper>
-
-      {/* Table */}
-      <Paper shadow="xs" className={classes.tableContainer}>
-        <Table.ScrollContainer minWidth={1000}>
-          <Table striped highlightOnHover>
-            <Table.Thead>
-              <Table.Tr>
-                <Table.Th ta="center">Level</Table.Th>
-                <Table.Th ta="center">Investment</Table.Th>
-                <Table.Th ta="center">Reward/Task</Table.Th>
-                <Table.Th ta="center">Daily Tasks</Table.Th>
-                <Table.Th ta="center">Commission Rates</Table.Th>
-                <Table.Th ta="center">Status</Table.Th>
-                <Table.Th ta="center">Actions</Table.Th>
-              </Table.Tr>
-            </Table.Thead>
-              <Table.Tbody>
-                          {isLoading ? (
-                            <Table.Tr>
-                              <Table.Td colSpan={9}>
-                                <Flex justify="center"  direction="column" align="center" py="xl">
-                                  <Loader size="lg" />
-                                  <Text c="dimmed" ml="sm">
-                                    Loading Level...
-                                  </Text>
-                                </Flex>
-                              </Table.Td>
-                            </Table.Tr>
-                          ) : rows.length > 0 ? (
-                            rows
-                          ) : (
-                            <Table.Tr>
-                              <Table.Td colSpan={9}>
-                                <Text ta="center" c="dimmed" py="xl">
-                                  No Level found
-                                </Text>
-                              </Table.Td>
-                            </Table.Tr>
-                          )}
-                        </Table.Tbody>
-          </Table>
-        </Table.ScrollContainer>
-
-        {/* Pagination */}
-        {pagination.totalPages > 1 && (
-          <Group justify="center" p="md" className={classes.pagination}>
-            <Pagination
-              value={activePage}
-              onChange={setActivePage}
-              total={pagination.totalPages}
+        <Paper p="md" radius="lg" shadow="sm" withBorder>
+          {}
+          <Group gap="md" mb="lg">
+            <TextInput
+              placeholder="Search levels..."
+              leftSection={<FiSearch size={16} />}
+              radius="md"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setActivePage(1);
+              }}
+              style={{ flex: 1 }}
             />
           </Group>
-        )}
-      </Paper>
 
-      {/* Create Level Modal */}
-      <Modal
-        opened={createModal}
-        onClose={() => setCreateModal(false)}
-        title="Create New Level"
-        size="lg"
-        centered
-      >
-        <Flex direction="column" gap="md">
-          <Grid>
-            <Grid.Col span={6}>
-              <NumberInput
-                label="Level Number"
-                placeholder="Enter level number"
-                value={formData.levelNumber}
-                onChange={(value) => setFormData({ ...formData, levelNumber: Number(value) })}
-                min={0}
-                required
-              />
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <TextInput
-                label="Level Name"
-                placeholder="e.g., AppleMini, AppleMax"
-                value={formData.levelName}
-                onChange={(e) => setFormData({ ...formData, levelName: e.target.value })}
-                required
-              />
-            </Grid.Col>
-          </Grid>
+          <Table.ScrollContainer minWidth={800}>
+            <Table verticalSpacing="md">
+              <Table.Thead bg="gray.1">
+                <Table.Tr>
+                  <Table.Th>Level Name</Table.Th>
+                  <Table.Th>Investment</Table.Th>
+                  <Table.Th>Daily Income</Table.Th>
+                  <Table.Th>Status</Table.Th>
+                  <Table.Th>Actions</Table.Th>
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>
+                {isLoading ? (
+                  <Table.Tr>
+                    <Table.Td colSpan={5}>
+                      <Flex justify="center" p="xl"><Loader size="sm" /></Flex>
+                    </Table.Td>
+                  </Table.Tr>
+                ) : rows.length > 0 ? (
+                  rows
+                ) : (
+                  <Table.Tr>
+                    <Table.Td colSpan={5}>
+                      <Text ta="center" c="dimmed" p="xl">No levels found</Text>
+                    </Table.Td>
+                  </Table.Tr>
+                )}
+              </Table.Tbody>
+            </Table>
+          </Table.ScrollContainer>
 
-          <Grid>
-            <Grid.Col span={6}>
-              <NumberInput
-                label="Investment Amount (₹)"
-                placeholder="Enter investment"
-                value={formData.investmentAmount}
-                onChange={(value) => setFormData({ ...formData, investmentAmount: Number(value) })}
-                min={0}
-                prefix="₹"
-                required
-              />
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <NumberInput
-                label="Reward Per Task (₹)"
-                placeholder="Enter reward"
-                value={formData.rewardPerTask}
-                onChange={(value) => setFormData({ ...formData, rewardPerTask: Number(value) })}
-                min={0}
-                prefix="₹"
-                required
-              />
-            </Grid.Col>
-          </Grid>
+          <Flex justify="flex-end" mt="md">
+            <Pagination
+              total={pagination.totalPages || 1}
+              value={activePage}
+              onChange={setActivePage}
+              radius="md"
+              size="sm"
+            />
+          </Flex>
+        </Paper>
 
-          <NumberInput
-            label="Daily Task Limit"
-            placeholder="Enter daily task limit"
-            value={formData.dailyTaskLimit}
-            onChange={(value) => setFormData({ ...formData, dailyTaskLimit: Number(value) })}
-            min={1}
-            required
-          />
-
-          <Text size="sm" fw={500}>Commission Rates (%)</Text>
-          <Grid>
-            <Grid.Col span={4}>
-              <NumberInput
-                label="A-Level"
-                value={formData.aLevelCommissionRate}
-                onChange={(value) => setFormData({ ...formData, aLevelCommissionRate: Number(value) })}
-                min={0}
-                max={100}
-                suffix="%"
-              />
-            </Grid.Col>
-            <Grid.Col span={4}>
-              <NumberInput
-                label="B-Level"
-                value={formData.bLevelCommissionRate}
-                onChange={(value) => setFormData({ ...formData, bLevelCommissionRate: Number(value) })}
-                min={0}
-                max={100}
-                suffix="%"
-              />
-            </Grid.Col>
-            <Grid.Col span={4}>
-              <NumberInput
-                label="C-Level"
-                value={formData.cLevelCommissionRate}
-                onChange={(value) => setFormData({ ...formData, cLevelCommissionRate: Number(value) })}
-                min={0}
-                max={100}
-                suffix="%"
-              />
-            </Grid.Col>
-          </Grid>
-
-          <TextInput
-            label="Icon"
-            placeholder="Enter emoji icon"
-            value={formData.icon}
-            onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-          />
-
-          <TextInput
-            label="Description"
-            placeholder="Enter level description"
-            value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          />
-
-          <NumberInput
-            label="Order"
-            placeholder="Display order"
-            value={formData.order}
-            onChange={(value) => setFormData({ ...formData, order: Number(value) })}
-            min={0}
-          />
-
-          <Group justify="flex-end" gap="sm" mt="md">
-            <Button 
-              variant="subtle" 
-              onClick={() => setCreateModal(false)}
-              disabled={createLevelMutation.isPending}
-            >
-              Cancel
-            </Button>
-            <Button 
-              onClick={confirmCreateLevel}
-              loading={createLevelMutation.isPending}
-              leftSection={<FiPlus />}
-            >
-              Create Level
-            </Button>
-          </Group>
-        </Flex>
-      </Modal>
-
-      {/* Edit Level Modal */}
-      <Modal
-        opened={editModal}
-        onClose={() => setEditModal(false)}
-        title="Edit Level"
-        size="lg"
-        centered
-      >
-        {selectedLevel && (
-          <Flex direction="column" gap="md">
+        {}
+        <Modal
+          opened={createModal || editModal}
+          onClose={() => { setCreateModal(false); setEditModal(false); }}
+          title={<Text fw={700}>{createModal ? 'Create New Level' : 'Edit Level'}</Text>}
+          size="lg"
+          centered
+          radius="lg"
+        >
+          <Stack gap="md">
             <Grid>
               <Grid.Col span={6}>
                 <NumberInput
                   label="Level Number"
+                  placeholder="1, 2, 3..."
                   value={formData.levelNumber}
-                  onChange={(value) => setFormData({ ...formData, levelNumber: Number(value) })}
-                  min={0}
-                  disabled
+                  onChange={(val) => setFormData({ ...formData, levelNumber: Number(val) })}
+                  min={1}
+                  required
                 />
               </Grid.Col>
               <Grid.Col span={6}>
                 <TextInput
                   label="Level Name"
+                  placeholder="Tier Name"
                   value={formData.levelName}
                   onChange={(e) => setFormData({ ...formData, levelName: e.target.value })}
-                  disabled
+                  required
                 />
               </Grid.Col>
             </Grid>
@@ -603,152 +404,65 @@ const LevelManagement = () => {
             <Grid>
               <Grid.Col span={6}>
                 <NumberInput
-                  label="Investment Amount (₹)"
+                  label="Investment Requirement"
+                  placeholder="0.00"
                   value={formData.investmentAmount}
-                  onChange={(value) => setFormData({ ...formData, investmentAmount: Number(value) })}
+                  onChange={(val) => setFormData({ ...formData, investmentAmount: Number(val) })}
                   min={0}
-                  prefix="₹"
+                  leftSection="₹"
+                  required
                 />
               </Grid.Col>
               <Grid.Col span={6}>
                 <NumberInput
-                  label="Reward Per Task (₹)"
-                  value={formData.rewardPerTask}
-                  onChange={(value) => setFormData({ ...formData, rewardPerTask: Number(value) })}
+                  label="Daily Income"
+                  placeholder="0.00"
+                  value={formData.dailyIncome}
+                  onChange={(val) => setFormData({ ...formData, dailyIncome: Number(val) })}
                   min={0}
-                  prefix="₹"
-                />
-              </Grid.Col>
-            </Grid>
-
-            <NumberInput
-              label="Daily Task Limit"
-              value={formData.dailyTaskLimit}
-              onChange={(value) => setFormData({ ...formData, dailyTaskLimit: Number(value) })}
-              min={1}
-            />
-
-            <Text size="sm" fw={500}>Commission Rates (%)</Text>
-            <Grid>
-              <Grid.Col span={4}>
-                <NumberInput
-                  label="A-Level"
-                  value={formData.aLevelCommissionRate}
-                  onChange={(value) => setFormData({ ...formData, aLevelCommissionRate: Number(value) })}
-                  min={0}
-                  max={100}
-                  suffix="%"
-                />
-              </Grid.Col>
-              <Grid.Col span={4}>
-                <NumberInput
-                  label="B-Level"
-                  value={formData.bLevelCommissionRate}
-                  onChange={(value) => setFormData({ ...formData, bLevelCommissionRate: Number(value) })}
-                  min={0}
-                  max={100}
-                  suffix="%"
-                />
-              </Grid.Col>
-              <Grid.Col span={4}>
-                <NumberInput
-                  label="C-Level"
-                  value={formData.cLevelCommissionRate}
-                  onChange={(value) => setFormData({ ...formData, cLevelCommissionRate: Number(value) })}
-                  min={0}
-                  max={100}
-                  suffix="%"
+                  leftSection="₹"
+                  required
                 />
               </Grid.Col>
             </Grid>
 
             <TextInput
-              label="Icon"
+              label="Display Icon"
+              placeholder="Emoji or text"
               value={formData.icon}
               onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
             />
 
-            <TextInput
-              label="Description"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            />
-
-            <NumberInput
-              label="Order"
-              value={formData.order}
-              onChange={(value) => setFormData({ ...formData, order: Number(value) })}
-              min={0}
-            />
-
             <Switch
-              label="Active Status"
+              label="Level is Active"
               checked={formData.isActive}
               onChange={(e) => setFormData({ ...formData, isActive: e.currentTarget.checked })}
+              color="teal"
             />
 
-            <Group justify="flex-end" gap="sm" mt="md">
-              <Button 
-                variant="subtle" 
-                onClick={() => setEditModal(false)}
-                disabled={updateLevelMutation.isPending}
-              >
-                Cancel
-              </Button>
-              <Button 
-                color="orange"
-                onClick={confirmUpdateLevel}
-                loading={updateLevelMutation.isPending}
-                leftSection={<FiEdit />}
-              >
-                Update Level
-              </Button>
-            </Group>
-          </Flex>
-        )}
-      </Modal>
+            <Button
+              fullWidth
+              mt="md"
+              color="#0f2027"
+              onClick={createModal ? confirmCreateLevel : confirmUpdateLevel}
+              loading={createModal ? createLevelMutation.isPending : updateLevelMutation.isPending}
+            >
+              {createModal ? 'Create Level' : 'Save Changes'}
+            </Button>
+          </Stack>
+        </Modal>
 
-      {/* Delete Confirmation Modal */}
-      <Modal
-        opened={deleteModal}
-        onClose={() => setDeleteModal(false)}
-        title="Delete Level"
-        centered
-      >
-        {selectedLevel && (
-          <Flex direction="column" gap="md">
-            <Alert icon={<FiAlertCircle />} title="Warning" color="red">
-              Are you sure you want to delete this level? This action cannot be undone and may affect users.
-            </Alert>
+        {}
+        <Modal opened={deleteModal} onClose={() => setDeleteModal(false)} centered title="Confirm Deletion">
+          <Text size="sm" mb="lg">Are you sure you want to delete <b>{selectedLevel?.levelName}</b>? This action cannot be undone.</Text>
+          <Group justify="flex-end">
+            <Button variant="default" onClick={() => setDeleteModal(false)}>Cancel</Button>
+            <Button color="red" onClick={confirmDeleteLevel} loading={deleteLevelMutation.isPending}>Delete</Button>
+          </Group>
+        </Modal>
 
-            <Text size="sm" c="dimmed">
-              Level: <strong>{selectedLevel.levelName}</strong>
-            </Text>
-            <Text size="sm" c="dimmed">
-              Level Number: <strong>{selectedLevel.levelNumber}</strong>
-            </Text>
-
-            <Group justify="flex-end" gap="sm" mt="md">
-              <Button 
-                variant="subtle" 
-                onClick={() => setDeleteModal(false)}
-                disabled={deleteLevelMutation.isPending}
-              >
-                Cancel
-              </Button>
-              <Button 
-                color="red"
-                onClick={confirmDeleteLevel}
-                loading={deleteLevelMutation.isPending}
-                leftSection={<FiTrash2 />}
-              >
-                Delete Level
-              </Button>
-            </Group>
-          </Flex>
-        )}
-      </Modal>
-    </Flex>
+      </Stack>
+    </Box>
   );
 };
 

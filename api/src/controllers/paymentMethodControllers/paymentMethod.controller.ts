@@ -10,12 +10,18 @@ export const createPaymentMethod = async (req: Request, res: Response) => {
       methodName,
       methodType,
       upiId,
-      qrCode,
+      qrCode: qrCodeUrlBody,
       accountName,
       accountNumber,
       ifscCode,
       bankName,
     } = req.body;
+
+    // If a file was uploaded via multer, construct the public URL
+    const qrFile = (req as any).file;
+    const qrCode = qrFile
+      ? `/api/uploads/qr-codes/${qrFile.filename}`
+      : qrCodeUrlBody || undefined;
 
     if (!methodName || !methodType) {
       return JsonResponse(res, {
@@ -114,11 +120,16 @@ export const getAllPaymentMethods = async (req: Request, res: Response) => {
   }
 };
 
-// Update payment method (ADMIN)
+
 export const updatePaymentMethod = async (req: Request, res: Response) => {
   try {
     const { methodId } = req.params;
-    const updateData = req.body;
+    const updateData: any = { ...req.body };
+
+    const qrFile = (req as any).file;
+    if (qrFile) {
+      updateData.qrCode = `/api/uploads/qr-codes/${qrFile.filename}`;
+    }
 
     const paymentMethod = await models.paymentMethod.findByIdAndUpdate(
       methodId,
@@ -153,7 +164,7 @@ export const updatePaymentMethod = async (req: Request, res: Response) => {
   }
 };
 
-// Delete payment method (ADMIN)
+
 export const deletePaymentMethod = async (req: Request, res: Response) => {
   try {
     const { methodId } = req.params;

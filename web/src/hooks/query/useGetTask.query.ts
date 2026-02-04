@@ -38,7 +38,7 @@ export type TTaskStats = {
   userLevelNumber: number | null;
   rewardPerTask?: number;
   maxDailyEarning?: number;
-  todayIncome?: number; // Added this field
+  todayIncome?: number; 
 };
 
 export type TTaskResponse = {
@@ -173,9 +173,9 @@ export const useInfiniteTasksQuery = (params?: {
       return currentPage + 1;
     },
     initialPageParam: 1,
-    staleTime: 1000 * 30, // 30 seconds for fresher data
-    refetchOnMount: true, // Refetch when component mounts
-    refetchOnWindowFocus: true, // Refetch when window regains focus
+    staleTime: 1000 * 30, 
+    refetchOnMount: true, 
+    refetchOnWindowFocus: true, 
     retry: (failureCount, error: any) => {
       if (error?.response?.status === 403) return false;
       return failureCount < 2;
@@ -208,7 +208,7 @@ export const useTaskQuery = (taskId: string) => {
     queryKey: ["task", taskId],
     queryFn: () => getTaskById(taskId),
     enabled: !!taskId,
-    staleTime: 1000 * 30, // 30 seconds for fresher data
+    staleTime: 1000 * 30, 
     refetchOnMount: true,
     refetchOnWindowFocus: true,
     retry: 2,

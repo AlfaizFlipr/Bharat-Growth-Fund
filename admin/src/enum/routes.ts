@@ -5,10 +5,6 @@ export const ROUTES = {
 
   ALL_USERS: "/users",
 
-  TASKS: "/tasks",
-
-  TEAMS: "/teams",
-
   LEVELS: "/levels",
   RECHARGE: "/recharge",
 
@@ -19,11 +15,10 @@ export const ROUTES = {
   USD_WITHDRAWAL_SETTINGS: "/usd-withdrawal-settings",
 
   WITHDRAWAL_CONFIG: "/withdrawal-config",
+  REWARD_CONFIG: "/reward-config",
 
-  PAYMENT_METHOD: "payment-method",
+  PAYMENT_METHOD: "/payment-method",
 
-  CONFERENCE_NEWS: "conference-News",
 
   SETTINGS: "/settings",
-
 };

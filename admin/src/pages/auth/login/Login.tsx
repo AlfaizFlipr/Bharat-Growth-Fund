@@ -3,6 +3,14 @@ import {
   PasswordInput,
   Text,
   TextInput,
+  Paper,
+  Box,
+  Stack,
+  Group,
+  ThemeIcon,
+  Title,
+  Divider,
+  Center,
 } from "@mantine/core";
 import { useForm, yupResolver } from "@mantine/form";
 import classes from "./index.module.scss";
@@ -11,9 +19,8 @@ import { VALIDATIONS } from "../../../forms/validations";
 import { useLoginAdminMutation } from "../../../hooks/mutations/useLoginMutation";
 import { showNotification } from "@mantine/notifications";
 import { ROUTES } from "../../../enum/routes";
-import { FaApple } from "react-icons/fa";
+import { Shield, Lock, Mail, Building2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { COLORS } from "../../../assets/colors";
 const Login = () => {
   const navigate = useNavigate();
 
@@ -59,50 +66,84 @@ const Login = () => {
   };
 
   return (
-    <div className={classes.mainContainer}>
-      <div className={classes.card}>
-        <div className={classes.formContainer}>
-          <div className={classes.imgContainer}>
-            <FaApple size="45px" color={COLORS.primaryDark}/>
-          </div>
-          <Text c={COLORS.primaryDark} size="16px" fw={600}>
-            Welcome Back To Apple India Job 24X7
-          </Text>
-          <Text c={COLORS.primaryDark} size="14px" fw={500}>
-            Login to Control Panel
-          </Text>
-          <form
-            onSubmit={form.onSubmit(handleSubmit)}
-            className={classes.loginForm}
-          >
-            <TextInput
-              label="Enter Your Email"
-              placeholder="Enter Email"
-              {...form.getInputProps("username")}
-              error={form.getInputProps("username").error}
-              classNames={{ label: classes.label, input: classes.input }}
-            />
-            <PasswordInput
-              label="Enter Your Password"
-              placeholder="Enter password"
-              {...form.getInputProps("password")}
-              error={form.getInputProps("password").error}
-              classNames={{ label: classes.label, input: classes.input }}
-            />
-            <Button
-              size="md"
-              type="submit"
-              loading={isPending}
-              disabled={isPending}
-              className={classes.button}
-              bg={COLORS.primary}
-            >
-              <Text>Submit</Text>
-            </Button>
+    <Box className={classes.mainContainer}>
+
+      <Paper className={classes.loginCard} withBorder radius="md" shadow="md">
+        <Stack gap="xl">
+          <Center mb="xs">
+            <Stack align="center" gap={0}>
+              <ThemeIcon
+                size={70}
+                radius="22px"
+                variant="filled"
+                style={{
+                  background: 'linear-gradient(135deg, #1e3a8a 0%, #172554 100%)',
+                  boxShadow: '0 10px 30px rgba(30, 58, 138, 0.3)'
+                }}
+              >
+                <Shield size={34} color="#ffd700" />
+              </ThemeIcon>
+              <Title order={2} mt="md" fw={900} style={{ letterSpacing: "-1px" }}>
+                BHARAT GROWTH FUND
+              </Title>
+              <Text size="xs" c="dimmed" fw={700} style={{ letterSpacing: 1.2 }}>
+                INSTITUTIONAL LOGIN • SECURE NODE
+              </Text>
+            </Stack>
+          </Center>
+
+          <Divider
+            label={<Text size="xs" fw={700} c="dimmed">IDENTITY VERIFICATION</Text>}
+            labelPosition="center"
+          />
+
+          <form onSubmit={form.onSubmit(handleSubmit)}>
+            <Stack gap="md">
+              <TextInput
+                label="Email Address"
+                placeholder="admin@bgf.com"
+                leftSection={<Mail size={16} color="#666" />}
+                {...form.getInputProps("username")}
+                radius="md"
+                size="md"
+                classNames={{ label: classes.formLabel, input: classes.formInput }}
+              />
+
+              <PasswordInput
+                label="Password"
+                placeholder="••••••••"
+                leftSection={<Lock size={16} color="#666" />}
+                {...form.getInputProps("password")}
+                radius="md"
+                size="md"
+                classNames={{ label: classes.formLabel, input: classes.formInput }}
+              />
+
+              <Button
+                size="lg"
+                type="submit"
+                loading={isPending}
+                disabled={isPending}
+                radius="md"
+                mt="md"
+                className={classes.submitButton}
+              >
+                Login
+              </Button>
+            </Stack>
           </form>
-        </div>
-      </div>
-    </div>
+
+          <Box mt="xs">
+            <Group justify="center" gap="xs">
+              <Building2 size={12} color="#94a3b8" />
+              <Text size="10px" c="dimmed" fw={700}>
+                © 2026 BGF ASSET MANAGEMENT • INTERNAL USE ONLY
+              </Text>
+            </Group>
+          </Box>
+        </Stack>
+      </Paper>
+    </Box>
   );
 };
 

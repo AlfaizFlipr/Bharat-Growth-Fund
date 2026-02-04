@@ -1,4 +1,4 @@
-// controllers/admin/withdrawalConfig.controller.ts
+
 import { Request, Response, NextFunction } from 'express';
 import commonsUtils from '../../utils';
 import models from '../../models';
@@ -15,7 +15,7 @@ const DAY_NAMES = [
   'Saturday',
 ];
 
-// ✅ Get all withdrawal configurations
+
 export const getWithdrawalConfigs = async (
   req: Request,
   res: Response,
@@ -24,7 +24,7 @@ export const getWithdrawalConfigs = async (
   try {
     const configs = await models.withdrawalConfig.find().lean();
 
-    // Ensure all days exist
+    
     const allDays = DAY_NAMES.map((dayName, i) => {
       const existing = configs.find((c: any) => c.dayOfWeek === i);
       return (
@@ -32,7 +32,7 @@ export const getWithdrawalConfigs = async (
           dayOfWeek: i,
           dayName,
           allowedLevels: [],
-          isActive: i !== 0, // Sunday off by default
+          isActive: i !== 0, 
           startTime: '08:30',
           endTime: '17:00',
         }
@@ -57,7 +57,7 @@ export const getWithdrawalConfigs = async (
   }
 };
 
-// ✅ Update single config by day
+
 export const updateWithdrawalConfig = async (
   req: Request,
   res: Response,
@@ -106,7 +106,7 @@ export const updateWithdrawalConfig = async (
   }
 };
 
-// ✅ Bulk update configs
+
 export const bulkUpdateConfigs = async (
   req: Request,
   res: Response,

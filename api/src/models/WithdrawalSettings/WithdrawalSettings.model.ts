@@ -1,34 +1,34 @@
-// models/WithdrawalSettings/WithdrawalSettings.model.ts
+
 import { Schema, model, Document } from 'mongoose';
 
 export interface IWithdrawalSettings extends Document {
-  // Payment method settings
+  
   stripeEnabled: boolean;
   bitgetEnabled: boolean;
   
-  // Bitget configuration (stored encrypted in production)
+  
   bitgetApiKey: string;
   bitgetSecretKey: string;
-  bitgetPassphrase: string; // Required for Bitget API
-  bitgetNetwork: string; // e.g., 'trc20', 'bep20', 'erc20' (lowercase for Bitget)
-  bitgetCurrency: string; // e.g., 'USDT', 'USDC'
+  bitgetPassphrase: string; 
+  bitgetNetwork: string; 
+  bitgetCurrency: string; 
   
-  // Exchange rate settings
+  
   usdExchangeRate: number;
   autoUpdateExchangeRate: boolean;
   
-  // Withdrawal limits
+  
   minWithdrawalINR: number;
   maxWithdrawalINR: number;
   
-  // Fees (percentage)
+  
   stripeFeePercent: number;
   bitgetFeePercent: number;
   
-  // Default method
+  
   defaultWithdrawalMethod: 'stripe' | 'bitget';
   
-  // Admin notes
+  
   notes: string;
   
   updatedBy: Schema.Types.ObjectId;
@@ -40,11 +40,11 @@ const withdrawalSettingsSchema = new Schema<IWithdrawalSettings>(
   {
     stripeEnabled: {
       type: Boolean,
-      default: false, // Disabled by default, Bitget enabled
+      default: false, 
     },
     bitgetEnabled: {
       type: Boolean,
-      default: true, // Bitget enabled by default
+      default: true, 
     },
     bitgetApiKey: {
       type: String,
@@ -56,11 +56,11 @@ const withdrawalSettingsSchema = new Schema<IWithdrawalSettings>(
     },
     bitgetPassphrase: {
       type: String,
-      default: '', // Required for Bitget API authentication
+      default: '', 
     },
     bitgetNetwork: {
       type: String,
-      default: 'trc20', // TRC20 - lower fees (Bitget uses lowercase)
+      default: 'trc20', 
       enum: ['trc20', 'bep20', 'erc20', 'sol', 'matic'],
     },
     bitgetCurrency: {
@@ -70,7 +70,7 @@ const withdrawalSettingsSchema = new Schema<IWithdrawalSettings>(
     },
     usdExchangeRate: {
       type: Number,
-      default: 83, // 1 USD = 83 INR
+      default: 83, 
     },
     autoUpdateExchangeRate: {
       type: Boolean,
@@ -78,7 +78,7 @@ const withdrawalSettingsSchema = new Schema<IWithdrawalSettings>(
     },
     minWithdrawalINR: {
       type: Number,
-      default: 0.01, // ~$0.001 USD for testing
+      default: 0.01, 
     },
     maxWithdrawalINR: {
       type: Number,
@@ -86,16 +86,16 @@ const withdrawalSettingsSchema = new Schema<IWithdrawalSettings>(
     },
     stripeFeePercent: {
       type: Number,
-      default: 2.9, // Stripe standard fee
+      default: 2.9, 
     },
     bitgetFeePercent: {
       type: Number,
-      default: 0.1, // Bitget withdrawal fee
+      default: 0.1, 
     },
     defaultWithdrawalMethod: {
       type: String,
       enum: ['stripe', 'bitget'],
-      default: 'bitget', // Bitget as default
+      default: 'bitget', 
     },
     notes: {
       type: String,

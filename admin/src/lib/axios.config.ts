@@ -24,7 +24,6 @@ export const request = async (options: AxiosRequestConfig<unknown>) => {
 
   try {
     const response = await client(options);
-     console.log(response)
     return onSuccess(response);
   } catch (error) {
     return onError(error);
