@@ -291,7 +291,7 @@ const WithdrawalManagement = () => {
               <Tooltip label="Approve Request">
                 <ActionIcon
                   variant="light"
-                  color="emerald"
+                  color="#0f2027"
                   size="sm"
                   onClick={() => handleApprove(withdrawal)}
                   radius="md"
@@ -593,7 +593,7 @@ const WithdrawalManagement = () => {
             <Group justify="flex-end" mt="md">
               <Button variant="subtle" color="gray" onClick={() => setApproveModal(false)}>Discard</Button>
               <Button
-                color="emerald"
+               color="#0f2027"
                 onClick={confirmApprove}
                 loading={approveWithdrawalMutation.isPending}
                 leftSection={<Save size={16} />}

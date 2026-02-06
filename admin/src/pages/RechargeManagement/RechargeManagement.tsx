@@ -507,7 +507,7 @@ const RechargeManagement = () => {
             <Group justify="flex-end" mt="md">
               <Button variant="subtle" color="gray" onClick={() => setApproveModal(false)}>Discard</Button>
               <Button
-                color="emerald"
+               color="#0f2027"
                 onClick={confirmApprove}
                 loading={approveRechargeMutation.isPending}
                 leftSection={<Save size={16} />}
@@ -662,7 +662,7 @@ const RechargeManagement = () => {
             )}
 
             <Group justify="flex-end">
-              <Button variant="light" color="blue" radius="xl" onClick={() => setViewModal(false)}>Close Audit</Button>
+              <Button variant="light" color="#0f2027" radius="xl" onClick={() => setViewModal(false)}>Close Audit</Button>
             </Group>
           </Stack>
         )}

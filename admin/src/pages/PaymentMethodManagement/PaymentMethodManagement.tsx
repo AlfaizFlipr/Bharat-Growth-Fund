@@ -671,7 +671,7 @@ const PaymentMethodManagement = () => {
                 Cancel
               </Button>
               <Button
-                color="orange"
+              color="#0f2027"
                 onClick={confirmUpdateMethod}
                 loading={updateMethodMutation.isPending}
                 leftSection={<FiEdit />}

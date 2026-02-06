@@ -91,15 +91,15 @@ const WithdrawalScreen: React.FC = () => {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   const predefinedAmounts = [
-    280, 750, 1080, 2100, 3500, 55000, 108000, 150000,
+    290, 1020, 1580, 6500 ,16000, 35000, 5500
   ];
 
   const { data: walletInfo, isLoading: walletLoading } = useWalletInfoQuery();
-  const { data: bankData = [], isLoading: bankLoading } = useBankAccountsQuery();
+  const { data: bankData = [], isLoading: bankLoading, refetch: refetchBankAccounts } = useBankAccountsQuery();
   const { data: scheduleData, isLoading: scheduleLoading } =
     useWithdrawalSchedule();
 
-  const bankAccounts = bankData?.accounts ?? [];
+  const bankAccounts = Array.isArray(bankData) ? bankData : bankData?.accounts ?? [];
   const addBankMutation = useAddBankAccountMutation();
   const addQRMutation = useAddQRCodeMutation();
   const deleteBankMutation = useDeleteBankAccountMutation();
@@ -110,7 +110,6 @@ const WithdrawalScreen: React.FC = () => {
   const userLevel = scheduleData?.userLevel;
   const todaySchedule = scheduleData?.today;
 
-  // ---- TIME AND SCHEDULE LOGIC ----
   const timeToMinutes = (timeString: string) => {
     if (!timeString) return 0;
     const [hours, minutes] = timeString.split(":").map(Number);
@@ -209,6 +208,11 @@ const WithdrawalScreen: React.FC = () => {
           accountType: "savings",
         });
         setFormErrors({});
+        try {
+          refetchBankAccounts();
+        } catch (e) {
+          console.log(e)
+        }
       },
     });
   };
@@ -227,6 +231,11 @@ const WithdrawalScreen: React.FC = () => {
         closeAddAccount();
         setQrForm({ qrName: "", upiId: "", qrImage: null, qrPreview: "" });
         setFormErrors({});
+        try {
+          refetchBankAccounts();
+        } catch (e) {
+          console.log(e)
+        }
       },
     });
   };

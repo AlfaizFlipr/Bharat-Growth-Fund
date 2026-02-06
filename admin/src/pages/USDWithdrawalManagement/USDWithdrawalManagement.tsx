@@ -577,7 +577,7 @@ const USDWithdrawalManagement = () => {
             <Group justify="flex-end" mt="md">
               <Button variant="subtle" color="gray" onClick={() => setApproveModal(false)}>Discard</Button>
               <Button
-                color="emerald"
+               color="#0f2027"
                 onClick={confirmApprove}
                 loading={approveUSDWithdrawalMutation.isPending}
                 leftSection={selectedWithdrawal.withdrawalMethod === 'bitget' ? <RiExchangeFundsLine /> : <FaStripe />}
