@@ -1,5 +1,4 @@
 import {
-  Title,
   SimpleGrid,
   Paper,
   Text,

@@ -22,7 +22,6 @@ import {
   SimpleGrid,
   Stack,
   ThemeIcon,
-  Title,
   Box,
 } from "@mantine/core";
 import {

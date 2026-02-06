@@ -20,7 +20,6 @@ import {
   Tooltip,
   Alert,
   SimpleGrid,
-  Title,
   Box,
 } from "@mantine/core";
 import {

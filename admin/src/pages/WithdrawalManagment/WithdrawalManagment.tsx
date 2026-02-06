@@ -21,7 +21,6 @@ import {
   Image,
   ThemeIcon,
   Stack,
-  Title,
   Box,
   SimpleGrid,
   Divider,
