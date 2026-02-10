@@ -26,6 +26,21 @@ const schema = new Schema<ILevel>(
       required: true,
       min: 0,
     },
+    aLevelCommissionRate: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    bLevelCommissionRate: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    cLevelCommissionRate: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
     isActive: {
       type: Boolean,
       default: true,

@@ -19,6 +19,10 @@ const schema = new Schema<IUser>(
     totalWithdrawals: { type: Number, default: 0 },
     totalProfit: { type: Number, default: 0 },
     withdrawalPassword: { type: String, select: false },
+    referralCode: { type: String, unique: true, sparse: true },
+    referredBy: { type: Schema.Types.ObjectId, ref: 'user' },
+    totalReferrals: { type: Number, default: 0 },
+    directReferralsCount: { type: Number, default: 0 },
     investmentAmount: { type: Number, default: 0, min: 0 },
     levelUpgradedAt: { type: Date, default: null },
     userLevel: { type: Number, default: -1 },
@@ -28,7 +32,7 @@ const schema = new Schema<IUser>(
     isActive: { type: Boolean, default: true },
     isVerified: { type: Boolean, default: false },
     isSSO: { type: Boolean, default: false },
-    
+
     isUSDUser: { type: Boolean, default: false },
     lastActiveDate: { type: Date, default: null },
     lastIncomeResetDate: { type: Date, default: Date.now },
@@ -49,6 +53,7 @@ const schema = new Schema<IUser>(
 );
 
 commonsUtils.dbUtils.handleDuplicates(schema, 'phone');
+commonsUtils.dbUtils.handleDuplicates(schema, 'referralCode');
 
 
 const userModel = model<IUser, IUserMethods>('user', schema);

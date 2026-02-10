@@ -11,6 +11,7 @@ import PaymentMethodManagement from "../pages/PaymentMethodManagement/PaymentMet
 import WithdrawalConfigPage from "../pages/WithdrawalConfig/WithDrawalConfigPage";
 import USDWithdrawalManagement from "../pages/USDWithdrawalManagement/USDWithdrawalManagement";
 import USDWithdrawalSettingsPage from "../pages/USDWithdrawalManagement/USDWithdrawalSettingsPage";
+import TeamReferrals from "../pages/teamManagement/TeamReferrals";
 
 export const appRouter = createBrowserRouter([
   {
@@ -52,6 +53,10 @@ export const appRouter = createBrowserRouter([
       {
         path: ROUTES.PAYMENT_METHOD,
         element: <PaymentMethodManagement />,
+      },
+      {
+        path: ROUTES.TEAM_REFERRALS,
+        element: <TeamReferrals />,
       },
     ],
   },

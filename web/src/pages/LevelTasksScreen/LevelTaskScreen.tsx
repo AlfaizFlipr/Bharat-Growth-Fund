@@ -137,7 +137,7 @@ const LevelTasksScreen: React.FC = () => {
                   overflow: "hidden"
                 }}
               >
-                {}
+                { }
                 {isCurrent && (
                   <Box
                     style={{
@@ -212,6 +212,18 @@ const LevelTasksScreen: React.FC = () => {
                   </Box>
                 </SimpleGrid>
 
+                <Box mb="md" p="md" style={{ background: 'rgba(255,255,255,0.6)', borderRadius: 16, border: '1px solid rgba(0,0,0,0.04)' }}>
+                  <Flex align="center" justify="space-between">
+                    <Box>
+                      <Text size="10px" c="gray.6" fw={800}>REFERRAL RATES (A / B / C)</Text>
+                      <Text size="md" fw={900} c="#1a202c">{(level.aLevelCommissionRate ?? 0)}% / {(level.bLevelCommissionRate ?? 0)}% / {(level.cLevelCommissionRate ?? 0)}%</Text>
+                    </Box>
+                    <Box>
+                      <Text size="xs" c="dimmed">Direct / Indirect / Team</Text>
+                    </Box>
+                  </Flex>
+                </Box>
+
                 <Stack gap="xs" mb="xl">
                   {["Performance Guarantee", "Instant Dividends", "24/7 Priority Support"].map((benefit, i) => (
                     <Flex key={i} align="center" gap="sm">
@@ -223,7 +235,7 @@ const LevelTasksScreen: React.FC = () => {
                   ))}
                 </Stack>
 
-                {!isCurrent && (
+                {(level.levelNumber > currentUserLevelNum) && (
                   <Button
                     fullWidth
                     size="lg"
@@ -267,7 +279,7 @@ const LevelTasksScreen: React.FC = () => {
         </Flex>
       </Container>
 
-      {}
+      { }
       <Modal
         opened={showPurchaseModal}
         onClose={() => setShowPurchaseModal(false)}

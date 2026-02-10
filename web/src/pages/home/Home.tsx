@@ -19,16 +19,19 @@ import {
   Building2,
   Award,
   Zap,
-  Trophy
+  Trophy,
+  Users
 } from "lucide-react";
 import { IMAGES } from "../../assets";
 import { useNavigate } from "react-router-dom";
+import { ROUTES } from "../../enum/routes";
 
 const menuItems = [
   { icon: <TrendingUp size={24} />, title: "Levels", path: "/level", color: "blue" },
   { icon: <Zap size={24} />, title: "Recharge", path: "/recharge", color: "orange" },
   { icon: <Wallet size={24} />, title: "Withdrawal", path: "/withdrawal", color: "emerald" },
   { icon: <Trophy size={24} />, title: "Rewards", path: "/rewards", color: "gold" },
+  { icon: <Users size={24} />, title: "Referral", path: ROUTES.MY_TEAM, color: "grape" },
   { icon: <Building2 size={24} />, title: "Company", path: "/company-intro", color: "indigo" },
 ];
 
@@ -54,7 +57,7 @@ const Home: React.FC = () => {
 
   return (
     <Box bg="#f8f9fa" style={{ minHeight: "100vh", paddingBottom: 10 }}>
-      {}
+      { }
       <Carousel
         withIndicators
         height={240}
@@ -121,7 +124,7 @@ const Home: React.FC = () => {
       </Carousel>
 
       <Container size="sm" p="md" mt={-40} style={{ position: 'relative', zIndex: 10 }}>
-        {}
+        { }
         <Paper
           shadow="xl"
           radius="24px"
@@ -166,7 +169,7 @@ const Home: React.FC = () => {
           </SimpleGrid>
         </Paper>
 
-        {}
+        { }
         <Stack mt="xl" gap="md">
           <Flex align="center" justify="space-between">
             <Text fw={800} size="lg" c="#0f2027">Recommended Assets</Text>
@@ -195,7 +198,7 @@ const Home: React.FC = () => {
           </SimpleGrid>
         </Stack>
 
-        {}
+        { }
         <Stack mt="xl" gap="md">
           <Paper
             radius="20px"

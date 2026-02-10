@@ -19,6 +19,8 @@ import FinancialRecords from "../pages/financialRecords/financialRecords";
 import PrivacyPolicy from "../pages/company/PrivacyPolicy";
 import IdentityVerificationScreen from "../pages/IdentityVerification/IdentityVerificationScreen";
 import Task from "../pages/task/Task";
+import MyTeamReferrals from "../pages/Team/MyTeamReferrals";
+import { ROUTES } from "../enum/routes";
 
 
 export const appRouter = createBrowserRouter([
@@ -47,6 +49,7 @@ export const appRouter = createBrowserRouter([
             path: "/identity-verification",
             element: <IdentityVerificationScreen />,
           },
+          { path: ROUTES.MY_TEAM, element: <MyTeamReferrals /> },
         ],
       },
     ],

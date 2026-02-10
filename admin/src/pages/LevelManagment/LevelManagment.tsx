@@ -47,6 +47,9 @@ interface LevelFormData {
   levelName: string;
   investmentAmount: number;
   dailyIncome: number;
+  aLevelCommissionRate: number;
+  bLevelCommissionRate: number;
+  cLevelCommissionRate: number;
   icon: string;
   description: string;
   order: number;
@@ -54,30 +57,33 @@ interface LevelFormData {
 }
 
 const LevelManagement = () => {
-  
+
   const [searchQuery, setSearchQuery] = useState('');
   const [activePage, setActivePage] = useState(1);
   const itemsPerPage = 10;
 
-  
+
   const [createModal, setCreateModal] = useState(false);
   const [editModal, setEditModal] = useState(false);
   const [deleteModal, setDeleteModal] = useState(false);
   const [selectedLevel, setSelectedLevel] = useState<any>(null);
 
-  
+
   const [formData, setFormData] = useState<LevelFormData>({
     levelNumber: 1,
     levelName: '',
     investmentAmount: 0,
     dailyIncome: 0,
+    aLevelCommissionRate: 0,
+    bLevelCommissionRate: 0,
+    cLevelCommissionRate: 0,
     icon: '💰',
     description: '',
     order: 0,
     isActive: true
   });
 
-  
+
   const { data, isLoading, error } = useAllLevels({
     page: activePage,
     limit: itemsPerPage,
@@ -85,7 +91,7 @@ const LevelManagement = () => {
     isActive: true
   });
 
-  
+
   const createLevelMutation = useCreateLevel();
   const updateLevelMutation = useUpdateLevel();
   const deleteLevelMutation = useDeleteLevel();
@@ -94,13 +100,16 @@ const LevelManagement = () => {
   const pagination = data?.pagination || {};
   const statistics = data?.statistics || {};
 
-  
+
   const handleCreateLevel = () => {
     setFormData({
       levelNumber: levels.length + 1,
       levelName: '',
       investmentAmount: 0,
       dailyIncome: 0,
+      aLevelCommissionRate: 0,
+      bLevelCommissionRate: 0,
+      cLevelCommissionRate: 0,
       icon: '💰',
       description: '',
       order: levels.length + 1,
@@ -116,6 +125,9 @@ const LevelManagement = () => {
       levelName: level.levelName,
       investmentAmount: level.investmentAmount,
       dailyIncome: level.dailyIncome || 0,
+      aLevelCommissionRate: level.aLevelCommissionRate || 0,
+      bLevelCommissionRate: level.bLevelCommissionRate || 0,
+      cLevelCommissionRate: level.cLevelCommissionRate || 0,
       icon: level.icon || '💰',
       description: level.description || '',
       order: level.order,
@@ -238,6 +250,13 @@ const LevelManagement = () => {
         <Text size="sm" fw={700} c="green.8">₹{level.dailyIncome?.toLocaleString()}/day</Text>
       </Table.Td>
       <Table.Td>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <Text size="xs" fw={700}>A: {level.aLevelCommissionRate ?? 0}%</Text>
+          <Text size="xs" fw={700}>B: {level.bLevelCommissionRate ?? 0}%</Text>
+          <Text size="xs" fw={700}>C: {level.cLevelCommissionRate ?? 0}%</Text>
+        </div>
+      </Table.Td>
+      <Table.Td>
         <Badge color={level.isActive ? 'teal' : 'gray'} variant="light" size="sm">
           {level.isActive ? 'Active' : 'Inactive'}
         </Badge>
@@ -275,7 +294,7 @@ const LevelManagement = () => {
           <Text c="dimmed" size="sm">Configure investment tiers and daily rewards.</Text>
         </Box>
 
-        {}
+        { }
         <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md">
           <Paper p="lg" radius="lg" withBorder>
             <Group justify="space-between">
@@ -311,7 +330,7 @@ const LevelManagement = () => {
         </SimpleGrid>
 
         <Paper p="md" radius="lg" shadow="sm" withBorder>
-          {}
+          { }
           <Group gap="md" mb="lg">
             <TextInput
               placeholder="Search levels..."
@@ -333,6 +352,7 @@ const LevelManagement = () => {
                   <Table.Th>Level Name</Table.Th>
                   <Table.Th>Investment</Table.Th>
                   <Table.Th>Daily Income</Table.Th>
+                  <Table.Th>Referral (%)</Table.Th>
                   <Table.Th>Status</Table.Th>
                   <Table.Th>Actions</Table.Th>
                 </Table.Tr>
@@ -340,7 +360,7 @@ const LevelManagement = () => {
               <Table.Tbody>
                 {isLoading ? (
                   <Table.Tr>
-                    <Table.Td colSpan={5}>
+                    <Table.Td colSpan={6}>
                       <Flex justify="center" p="xl"><Loader size="sm" /></Flex>
                     </Table.Td>
                   </Table.Tr>
@@ -348,7 +368,7 @@ const LevelManagement = () => {
                   rows
                 ) : (
                   <Table.Tr>
-                    <Table.Td colSpan={5}>
+                    <Table.Td colSpan={6}>
                       <Text ta="center" c="dimmed" p="xl">No levels found</Text>
                     </Table.Td>
                   </Table.Tr>
@@ -368,7 +388,7 @@ const LevelManagement = () => {
           </Flex>
         </Paper>
 
-        {}
+        { }
         <Modal
           opened={createModal || editModal}
           onClose={() => { setCreateModal(false); setEditModal(false); }}
@@ -432,6 +452,45 @@ const LevelManagement = () => {
               onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
             />
 
+            <Paper p="sm" withBorder radius="md" bg="gray.0">
+              <Text size="sm" fw={700} mb="xs">Referral Commission Rates (%)</Text>
+              <Grid>
+                <Grid.Col span={4}>
+                  <NumberInput
+                    label="Level A (Direct)"
+                    placeholder="%"
+                    value={formData.aLevelCommissionRate}
+                    onChange={(val) => setFormData({ ...formData, aLevelCommissionRate: Number(val) })}
+                    min={0}
+                    max={100}
+                    suffix="%"
+                  />
+                </Grid.Col>
+                <Grid.Col span={4}>
+                  <NumberInput
+                    label="Level B"
+                    placeholder="%"
+                    value={formData.bLevelCommissionRate}
+                    onChange={(val) => setFormData({ ...formData, bLevelCommissionRate: Number(val) })}
+                    min={0}
+                    max={100}
+                    suffix="%"
+                  />
+                </Grid.Col>
+                <Grid.Col span={4}>
+                  <NumberInput
+                    label="Level C"
+                    placeholder="%"
+                    value={formData.cLevelCommissionRate}
+                    onChange={(val) => setFormData({ ...formData, cLevelCommissionRate: Number(val) })}
+                    min={0}
+                    max={100}
+                    suffix="%"
+                  />
+                </Grid.Col>
+              </Grid>
+            </Paper>
+
             <Switch
               label="Level is Active"
               checked={formData.isActive}
@@ -451,7 +510,7 @@ const LevelManagement = () => {
           </Stack>
         </Modal>
 
-        {}
+        { }
         <Modal opened={deleteModal} onClose={() => setDeleteModal(false)} centered title="Confirm Deletion">
           <Text size="sm" mb="lg">Are you sure you want to delete <b>{selectedLevel?.levelName}</b>? This action cannot be undone.</Text>
           <Group justify="flex-end">

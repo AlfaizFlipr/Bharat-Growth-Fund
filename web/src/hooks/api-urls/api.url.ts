@@ -76,7 +76,19 @@ export const usdWithdrawalUrls = {
   CREATE_WITHDRAWAL: usdWithdrawalPrefix + "/create",
   WITHDRAWAL_HISTORY: usdWithdrawalPrefix + "/history",
   TRANSACTION_HISTORY: usdWithdrawalPrefix + "/transactions",
-  
+
   WITHDRAWAL_METHODS: usdWithdrawalPrefix + "/methods",
   SAVE_BITGET_WALLET: usdWithdrawalPrefix + "/save-bitget-wallet",
+};
+
+const teamPrefix = "/team-api/team";
+const adminTeamPrefix = "/team-api/admin";
+
+export const teamUrls = {
+  STATS: teamPrefix + "/stats",
+  REFERRAL_LINK: teamPrefix + "/referral-link",
+  MY_REFERRALS: teamPrefix + "/referrals",
+  HISTORY: teamPrefix + "/history",
+  ADMIN_ALL_REFERRALS: adminTeamPrefix + "/team-referrals",
+  ADMIN_STATS: adminTeamPrefix + "/team-statistics",
 };

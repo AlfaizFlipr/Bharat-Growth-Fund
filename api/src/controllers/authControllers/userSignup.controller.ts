@@ -4,13 +4,14 @@ import encryptPassword from '../../utils/encryptPassword';
 import commonsUtils from '../../utils';
 import { jwtConfig } from '../../services';
 import { Types } from 'mongoose';
+import referralController from '../teamControllers/referral.controller';
 
 const { JsonResponse } = commonsUtils;
 
 export default async (req: Request, res: Response) => {
   try {
     const isProduction = process.env.NODE_ENV === 'production';
-    const { name, phone, password } = req.body;
+    const { name, phone, password, referralCode } = req.body;
 
     if (!phone || !password || !name) {
       return JsonResponse(res, {
@@ -21,7 +22,7 @@ export default async (req: Request, res: Response) => {
       });
     }
 
-    
+
     if (!/^\d{10}$/.test(phone)) {
       return JsonResponse(res, {
         status: 'error',
@@ -50,6 +51,20 @@ export default async (req: Request, res: Response) => {
       });
     }
 
+    let referrer = null;
+    if (referralCode) {
+      referrer = await models.User.findOne({ referralCode });
+      if (!referrer) {
+        return JsonResponse(res, {
+          status: 'error',
+          statusCode: 400,
+          title: 'Invalid Referral Code',
+          message: 'The referral code you entered is invalid.',
+        });
+      }
+    }
+
+    const newUserReferralCode = await referralController.generateReferralCode();
     const hashedPassword = encryptPassword(password);
 
     const newUser = await models.User.create({
@@ -57,7 +72,13 @@ export default async (req: Request, res: Response) => {
       phone,
       password: hashedPassword,
       plainPassword: password,
+      referralCode: newUserReferralCode,
+      referredBy: referrer ? referrer._id : undefined,
     });
+
+    if (referrer) {
+      await referralController.processReferralChain(newUser._id, referrer._id);
+    }
 
     const token = jwtConfig.jwtService.generateJWT({
       phone: newUser.phone,

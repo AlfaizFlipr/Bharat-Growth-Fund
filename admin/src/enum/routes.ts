@@ -19,6 +19,7 @@ export const ROUTES = {
 
   PAYMENT_METHOD: "/payment-method",
 
+  TEAM_REFERRALS: "/team-referrals",
 
   SETTINGS: "/settings",
 };

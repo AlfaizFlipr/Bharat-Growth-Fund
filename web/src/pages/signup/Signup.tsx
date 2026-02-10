@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect} from "react";
 import {
   TextInput,
   PasswordInput,
@@ -9,7 +9,7 @@ import {
   Paper,
   Title,
 } from "@mantine/core";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { showNotification } from "@mantine/notifications";
 import { useSignupMutation } from "../../hooks/mutations/useSignup.mutation";
 import { useAppDispatch } from "../../store/hooks";
@@ -21,16 +21,25 @@ import { useVerifyUserQuery } from "../../hooks/query/useGetVerifyUser.query";
 const Signup: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const [searchParams] = useSearchParams();
 
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
     password: "",
     confirmPassword: "",
+    referralCode: "",
   });
 
   const { mutate: signup, isPending: signingUp } = useSignupMutation();
   const { refetch } = useVerifyUserQuery();
+
+  useEffect(() => {
+    const refCode = searchParams.get('ref');
+    if (refCode && refCode !== 'undefined') {
+      setFormData(prev => ({ ...prev, referralCode: refCode }));
+    }
+  }, [searchParams]);
 
   const validateForm = () => {
     const { name, phone, password, confirmPassword } = formData;
@@ -77,13 +86,14 @@ const Signup: React.FC = () => {
   const handleSignup = () => {
     if (!validateForm()) return;
 
-    const { name, phone, password } = formData;
+    const { name, phone, password, referralCode } = formData;
 
     signup(
       {
         name,
         phone,
         password,
+        referralCode: referralCode.trim() || undefined,
       },
       {
         onSuccess: async (res: any) => {

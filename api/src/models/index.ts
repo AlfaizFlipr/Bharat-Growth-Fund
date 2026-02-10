@@ -14,6 +14,8 @@ import WithdrawalSettingsModel from "./WithdrawalSettings/WithdrawalSettings.mod
 import withdrawalConfigModel from "./withdrawalConfig/withdrawalConfig.model";
 import DailyIncomeModel from "./DailyIncome/DailyIncome.model";
 import TransactionModel from "./Transaction/Transaction.model";
+import TeamReferralModel from "./TeamReferral/TeamReferral.model";
+import TeamReferralHistoryModel from "./TeamReferralHistory/TeamReferralHistory.model";
 
 const models = {
   User: UserModel,
@@ -33,6 +35,8 @@ const models = {
   dailyIncome: DailyIncomeModel,
   Transaction: TransactionModel,
   transaction: TransactionModel,
+  TeamReferral: TeamReferralModel,
+  TeamReferralHistory: TeamReferralHistoryModel,
 };
 
 export default models;

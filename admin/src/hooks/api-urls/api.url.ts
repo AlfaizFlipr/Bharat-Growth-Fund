@@ -33,7 +33,7 @@ export const userUrls = {
   LEVEL: (userId: string) => userPrefix + "/users/" + userId + "/level",
   ADD_WALLET_AMOUNT: (userId: string) =>
     userPrefix + "/users/" + userId + "/add-wallet-amount",
-  DEDUCT_WALLET_AMOUNT : (userId:string) => 
+  DEDUCT_WALLET_AMOUNT: (userId: string) =>
     userPrefix + "/users/" + userId + "/deduct-wallet-amount",
   TOGGLE_USD_USER: (userId: string) =>
     usdWithdrawalPrefix + "/toggle-user/" + userId,
@@ -88,10 +88,17 @@ export const usdWithdrawalUrls = {
     `${usdWithdrawalPrefix}/approve/${withdrawalId}`,
   REJECT_USD_WITHDRAWAL: (withdrawalId: string) =>
     `${usdWithdrawalPrefix}/reject/${withdrawalId}`,
-  
+
   GET_SETTINGS: usdWithdrawalPrefix + "/settings",
   UPDATE_SETTINGS: usdWithdrawalPrefix + "/settings",
   TEST_BITGET: usdWithdrawalPrefix + "/test-bitget",
   BITGET_STATUS: (withdrawalId: string) =>
     `${usdWithdrawalPrefix}/bitget-status/${withdrawalId}`,
+};
+
+const teamPrefix = "/team-api/admin";
+
+export const teamUrls = {
+  ALL_REFERRALS: teamPrefix + "/team-referrals",
+  STATISTICS: teamPrefix + "/team-statistics",
 };

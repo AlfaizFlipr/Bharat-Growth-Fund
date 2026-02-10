@@ -33,6 +33,10 @@ export interface IUser extends Document {
   createdAt: Date;
   updatedAt: Date;
   withdrawalPassword: string;
+  referralCode: string;
+  referredBy?: ObjectId;
+  totalReferrals: number;
+  directReferralsCount: number;
   aadhaarNumber?: string | null;
   aadhaarPhoto?: string | null;
   aadhaarVerificationStatus: 'not_submitted' | 'pending' | 'approved' | 'rejected';

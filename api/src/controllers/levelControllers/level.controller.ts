@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import commonsUtils from "../../utils";
 import models from "../../models";
 import mongoose from "mongoose";
+import referralController from "../teamControllers/referral.controller";
 
 const { JsonResponse } = commonsUtils;
 
@@ -45,11 +46,11 @@ export const getAllLevels = async (
       let canPurchase = false;
       if (userCurrentLevel) {
         if (userCurrentLevel.hasLevel) {
-          
+
           canPurchase = level.levelNumber === userCurrentLevel.currentLevelNumber + 1 &&
             userCurrentLevel.mainWallet >= level.investmentAmount;
         } else {
-          
+
           canPurchase = level.levelNumber === 0 && userCurrentLevel.mainWallet >= level.investmentAmount;
         }
       }
@@ -65,6 +66,9 @@ export const getAllLevels = async (
         dailyIncome: level.dailyIncome,
         icon: level.icon,
         description: level.description,
+        aLevelCommissionRate: level.aLevelCommissionRate || 0,
+        bLevelCommissionRate: level.bLevelCommissionRate || 0,
+        cLevelCommissionRate: level.cLevelCommissionRate || 0,
         isUnlocked,
         isCurrent: isUserLevel,
         canPurchase,
@@ -151,12 +155,12 @@ export const upgradeUserLevel = async (
     user.currentLevelNumber = targetLevel.levelNumber;
     user.levelName = targetLevel.levelName;
     user.userLevel = targetLevel.levelNumber;
-    user.dailyIncome = targetLevel.dailyIncome; 
+    user.dailyIncome = targetLevel.dailyIncome;
     user.levelUpgradedAt = new Date();
 
     await user.save();
 
-    
+
     await models.transaction.create({
       userId: user._id,
       amount: targetLevel.investmentAmount,
@@ -166,6 +170,13 @@ export const upgradeUserLevel = async (
       balanceBefore: user.mainWallet + targetLevel.investmentAmount,
       balanceAfter: user.mainWallet
     });
+
+    // Process referral commissions
+    try {
+      await referralController.processReferralCommissions(user._id, targetLevel);
+    } catch (err) {
+      console.error("Error processing referral commissions:", err);
+    }
 
     return JsonResponse(res, {
       status: "success",
@@ -294,7 +305,7 @@ export const getAllLevelsAdmin = async (
     const limitNum = Number.parseInt(limit as string, 10);
     const skip = (pageNum - 1) * limitNum;
 
-    
+
     const filter: any = {};
 
     if (search) {
@@ -308,7 +319,7 @@ export const getAllLevelsAdmin = async (
       filter.isActive = isActive === "true";
     }
 
-    
+
     const [levels, totalCount] = await Promise.all([
       models.level.find(filter)
         .sort({ order: 1, levelNumber: 1 })
@@ -318,7 +329,7 @@ export const getAllLevelsAdmin = async (
       models.level.countDocuments(filter)
     ]);
 
-    
+
     const stats = await models.level.aggregate([
       {
         $group: {
@@ -332,7 +343,7 @@ export const getAllLevelsAdmin = async (
       }
     ]);
 
-    
+
     const userStats = await models.User.aggregate([
       {
         $group: {
@@ -342,7 +353,7 @@ export const getAllLevelsAdmin = async (
       }
     ]);
 
-    
+
     const levelsWithUserCount = levels.map((level: any) => {
       const userStat = userStats.find((s: any) => s._id === level.levelNumber);
       return {
@@ -393,12 +404,15 @@ export const createLevel = async (
       levelName,
       investmentAmount,
       dailyIncome,
+      aLevelCommissionRate,
+      bLevelCommissionRate,
+      cLevelCommissionRate,
       icon,
       description,
       order,
     } = req.body;
 
-    
+
     if (levelNumber === undefined || !levelName || dailyIncome === undefined) {
       return JsonResponse(res, {
         status: "error",
@@ -408,7 +422,7 @@ export const createLevel = async (
       });
     }
 
-    
+
     const existingLevel = await models.level.findOne({
       $or: [{ levelNumber }, { levelName }],
     });
@@ -427,6 +441,9 @@ export const createLevel = async (
       levelName,
       investmentAmount: investmentAmount || 0,
       dailyIncome,
+      aLevelCommissionRate: aLevelCommissionRate || 0,
+      bLevelCommissionRate: bLevelCommissionRate || 0,
+      cLevelCommissionRate: cLevelCommissionRate || 0,
       icon: icon || '💰',
       description: description || '',
       order: order ?? levelNumber,
@@ -497,6 +514,9 @@ export const updateLevel = async (
       "description",
       "order",
       "isActive",
+      "aLevelCommissionRate",
+      "bLevelCommissionRate",
+      "cLevelCommissionRate",
     ];
 
     allowedUpdates.forEach((field) => {
@@ -554,7 +574,7 @@ export const deleteLevel = async (
       });
     }
 
-    
+
     const usersCount = await models.User.countDocuments({
       currentLevelNumber: level.levelNumber
     });
@@ -588,13 +608,13 @@ export const deleteLevel = async (
 };
 
 export default {
-  
+
   getAllLevels,
   getLevelByName,
   getLevelByNumber,
   upgradeUserLevel,
 
-  
+
   getAllLevelsAdmin,
   createLevel,
   updateLevel,

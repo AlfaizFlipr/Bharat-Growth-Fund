@@ -28,6 +28,7 @@ import {
   Zap,
   Building2,
   Settings,
+  Users
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -37,8 +38,15 @@ import { useVerifyUserQuery } from "../../hooks/query/useGetVerifyUser.query";
 import { notifications } from "@mantine/notifications";
 import { useLogoutMutation } from "../../hooks/mutations/useLogout.mutation";
 import UpdateProfileModal from "../../components/UpdateProfileModal/UpdateProfileModal";
+import { ROUTES } from "../../enum/routes";
 
 const menuItems = [
+  {
+    icon: <Users size={20} />,
+    title: "Team Referrals",
+    path: ROUTES.MY_TEAM,
+    color: "grape",
+  },
   {
     icon: <Building2 size={20} />,
     title: "Company Introduction",
@@ -214,7 +222,7 @@ const Profile: React.FC = () => {
       </Box>
 
       <Container size="sm" p="md" mt={-40} style={{ position: 'relative', zIndex: 10 }}>
-        {}
+        { }
         <Paper
           radius="32px"
           p="xl"
@@ -279,7 +287,7 @@ const Profile: React.FC = () => {
           </Stack>
         </Paper>
 
-        {}
+        { }
         <Stack gap="sm">
           <Text fw={800} size="sm" px="xs" c="dimmed">ACCOUNT SETTINGS</Text>
           <Paper radius="24px" withBorder shadow="sm" style={{ overflow: 'hidden' }}>

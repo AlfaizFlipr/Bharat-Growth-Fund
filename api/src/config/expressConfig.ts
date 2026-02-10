@@ -12,6 +12,7 @@ import { userManagementRoutes } from '../routes/userManagement/userManagment.rou
 import { WithdrawalConfigRoutes } from '../routes/withdrawalCofig/withdrawalConfig.route';
 import { DashboardRoutes } from '../routes/admin/dashboard.routes';
 import { USDWithdrawalRoutes } from '../routes/usdWithdrawal/usdWithdrawal.route';
+import { TeamRoutes } from '../routes/team/team.route';
 
 class ExpressConfig {
   app: express.Application;
@@ -37,6 +38,7 @@ class ExpressConfig {
       new WithdrawalConfigRoutes(this.app),
       new DashboardRoutes(this.app),
       new USDWithdrawalRoutes(this.app),
+      new TeamRoutes(this.app),
     ];
 
     if (process.env.NODE_ENV !== 'test') this.configureRoutes(routes);
@@ -68,26 +70,26 @@ class ExpressConfig {
           return callback(null, true);
         }
 
-        
+
         if (allowedOrigins.includes(origin)) {
           callback(null, true);
         } else {
-          callback(null, false); 
+          callback(null, false);
         }
       },
-      credentials: true, 
+      credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'X-Requested-With'],
       exposedHeaders: ['Set-Cookie'],
-      maxAge: 86400, 
+      maxAge: 86400,
       optionsSuccessStatus: 200
     };
 
-    
+
     this.app.use(cors(corsOptions));
     this.app.options('*', cors(corsOptions));
 
-    
+
     this.app.use(cookieParser());
     this.app.use(express.json());
     this.app.use(bodyParser.urlencoded({ extended: true }));
