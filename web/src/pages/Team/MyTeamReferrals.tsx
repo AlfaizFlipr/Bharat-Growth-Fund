@@ -9,7 +9,6 @@ import {
     Tabs,
     Button,
     Group,
-    Title,
     ThemeIcon,
     Text,
     Pagination,

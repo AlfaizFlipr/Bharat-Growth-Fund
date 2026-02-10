@@ -21,7 +21,6 @@ import {
     Users,
     TrendingUp,
     Award,
-    UserCheck,
     Network
 } from "lucide-react";
 import { useAdminTeamReferrals, useAdminTeamStatistics } from "../../hooks/query/useAdminTeam.query";
